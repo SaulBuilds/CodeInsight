@@ -1,38 +1,148 @@
 /**
- * Vibe Insights AI - OpenAI Utilities
+ * Vibe Insights AI - OpenAI Integration
  * 
- * This file contains utilities for interacting with the OpenAI API
+ * This file contains utilities for interacting with OpenAI's API.
  */
 
-const axios = require('axios');
-const { OpenAI } = require('openai');
 const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
 const ora = require('ora');
 const chalk = require('chalk');
+const inquirer = require('inquirer');
+const { OPENAI_MODEL } = require('../utils/constants');
+
+// OpenAI API configuration
+const OPENAI_API_BASE_URL = 'https://api.openai.com/v1';
 
 /**
- * Validate OpenAI API key
- * @param {string} apiKey - The OpenAI API key to validate
- * @returns {Promise<boolean>} - True if the API key is valid
+ * Validate an OpenAI API key
+ * @param {string} apiKey - The API key to validate
+ * @returns {Promise<boolean>} Whether the key is valid
  */
 async function validateApiKey(apiKey) {
+  if (!apiKey) return false;
+
   try {
-    const openai = new OpenAI({
-      apiKey: apiKey
+    const response = await axios.get(`${OPENAI_API_BASE_URL}/models`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
     });
-    
-    // Make a small request to verify the API key
-    const response = await openai.createChatCompletion({
-      model: "gpt-4", 
-      messages: [
-        { role: "user", content: "This is a test message to verify the API key." }
-      ],
-      max_tokens: 10,
-    });
-    
-    return !!response.data.choices && response.data.choices.length > 0;
+
+    return response.status === 200;
   } catch (error) {
     return false;
+  }
+}
+
+/**
+ * Get OpenAI API key from user input or environment
+ * @param {string} providedKey - The key provided by the user (optional)
+ * @returns {Promise<string>} The API key
+ */
+async function getOpenAIKey(providedKey = '') {
+  // If key is provided, use it
+  if (providedKey) {
+    return providedKey;
+  }
+
+  // Check environment variable
+  const envKey = process.env.OPENAI_API_KEY;
+  if (envKey) {
+    return envKey;
+  }
+
+  // If not provided and not in environment, prompt user
+  console.log(chalk.yellow('\nOpenAI API key not found in environment.'));
+  
+  const { useKeyNow } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'useKeyNow',
+      message: 'Would you like to provide an OpenAI API key now?',
+      default: true,
+    },
+  ]);
+
+  if (!useKeyNow) {
+    console.log(chalk.red('OpenAI API key is required for this operation.'));
+    return null;
+  }
+
+  const { apiKey, saveKey } = await inquirer.prompt([
+    {
+      type: 'password',
+      name: 'apiKey',
+      message: 'Enter your OpenAI API key:',
+      validate: (input) => input.length > 0 ? true : 'API key is required',
+    },
+    {
+      type: 'confirm',
+      name: 'saveKey',
+      message: 'Save this key for future use? (will be stored in environment variable)',
+      default: false,
+    },
+  ]);
+
+  if (saveKey) {
+    console.log(chalk.green('To permanently save your API key, add it to your environment:'));
+    console.log(chalk.cyan('export OPENAI_API_KEY=your-api-key'));
+  }
+
+  return apiKey;
+}
+
+/**
+ * Call OpenAI API with custom prompt
+ * @param {Object} options - Options for the API call
+ * @param {string} options.prompt - The prompt to send to the API
+ * @param {string} options.apiKey - The API key to use
+ * @param {string} options.model - The model to use
+ * @param {number} options.maxTokens - Maximum tokens to generate
+ * @param {number} options.temperature - Temperature for sampling
+ * @returns {Promise<string>} The API response
+ */
+async function callOpenAI({
+  prompt,
+  apiKey,
+  model = OPENAI_MODEL,
+  maxTokens = 4000,
+  temperature = 0.7,
+}) {
+  try {
+    const response = await axios.post(
+      `${OPENAI_API_BASE_URL}/chat/completions`,
+      {
+        model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a technical documentation generator for codebases. Provide detailed, accurate, and well-structured information about the code being analyzed.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        max_tokens: maxTokens,
+        temperature,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+      }
+    );
+
+    return response.data.choices[0].message.content.trim();
+  } catch (error) {
+    if (error.response && error.response.data) {
+      throw new Error(`OpenAI API error: ${error.response.data.error.message}`);
+    } else {
+      throw new Error(`Error calling OpenAI API: ${error.message}`);
+    }
   }
 }
 
@@ -40,287 +150,174 @@ async function validateApiKey(apiKey) {
  * Generate architectural documentation
  * @param {string} codeContent - The code content to analyze
  * @param {string} apiKey - The OpenAI API key
- * @returns {Promise<string>} - The generated documentation
+ * @returns {Promise<string>} The generated documentation
  */
 async function generateArchitecturalDoc(codeContent, apiKey) {
-  const openai = new OpenAI({
-    apiKey: apiKey
+  const prompt = `
+# Architecture Documentation Generator
+
+Please analyze the following codebase and generate comprehensive architectural documentation. Focus on:
+
+1. **High-level architecture overview**
+2. **Core components and their relationships**
+3. **Design patterns used**
+4. **Data flow between components**
+5. **Key abstractions and interfaces**
+6. **System boundaries and external integrations**
+7. **Scalability and performance considerations**
+
+Format the documentation in Markdown with clear headings, diagrams descriptions, and examples where helpful.
+
+## Code to Analyze:
+
+\`\`\`
+${codeContent}
+\`\`\`
+
+Generate detailed architecture documentation based on this code.
+`;
+
+  return await callOpenAI({
+    prompt,
+    apiKey,
+    temperature: 0.5,
   });
-  const spinner = ora('Analyzing codebase architecture...').start();
-  
-  try {
-    const prompt = `
-    Please analyze the following repository code and generate a comprehensive architectural documentation.
-    Focus on the overall structure, key components, design patterns, and how different parts of the system interact.
-    Format the output as markdown with proper headings, code blocks, and bullet points as needed.
-    
-    Code:
-    ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
-    `;
-    
-    const systemMessage = "You are an experienced software architect who specializes in creating clear, detailed architectural documentation.";
-
-    const response = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 4000,
-    });
-
-    spinner.succeed(chalk.green('Architectural documentation generated successfully'));
-    return response.data.choices[0].message.content || "Failed to generate documentation";
-  } catch (error) {
-    spinner.fail(chalk.red('Failed to generate architectural documentation'));
-    console.error(chalk.red(`Error: ${error.message}`));
-    throw error;
-  }
 }
 
 /**
- * Generate user stories from repository code
+ * Generate user stories from code
  * @param {string} codeContent - The code content to analyze
  * @param {string} apiKey - The OpenAI API key
- * @returns {Promise<string>} - The generated user stories
+ * @returns {Promise<string>} The generated documentation
  */
 async function generateUserStories(codeContent, apiKey) {
-  const openai = new OpenAI({
-    apiKey: apiKey
+  const prompt = `
+# User Stories Generator
+
+Please analyze the following codebase and extract potential user stories. For each feature or functionality identified:
+
+1. **Create a user story in the format: "As a [user type], I want [action/goal] so that [benefit]"**
+2. **Identify acceptance criteria for each story**
+3. **Group related stories by feature area or user type**
+4. **Estimate relative complexity (simple, moderate, complex)**
+
+Format the output in Markdown with clear headings and bullet points.
+
+## Code to Analyze:
+
+\`\`\`
+${codeContent}
+\`\`\`
+
+Generate comprehensive user stories based on this code.
+`;
+
+  return await callOpenAI({
+    prompt,
+    apiKey,
+    temperature: 0.6,
   });
-  const spinner = ora('Generating user stories...').start();
-  
-  try {
-    const prompt = `
-    Please analyze the following repository code and generate user stories that describe the functionality from an end-user perspective.
-    Include acceptance criteria for each story when possible.
-    Format the output as markdown with proper headings and structure.
-    
-    Code:
-    ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
-    `;
-    
-    const systemMessage = "You are a product manager who specializes in creating detailed user stories from technical implementations.";
-
-    const response = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 4000,
-    });
-
-    spinner.succeed(chalk.green('User stories generated successfully'));
-    return response.data.choices[0].message.content || "Failed to generate user stories";
-  } catch (error) {
-    spinner.fail(chalk.red('Failed to generate user stories'));
-    console.error(chalk.red(`Error: ${error.message}`));
-    throw error;
-  }
 }
 
 /**
- * Generate custom analysis based on specific prompts
+ * Generate custom analysis
  * @param {string} codeContent - The code content to analyze
- * @param {string} customPrompt - The custom prompt to use
+ * @param {string} customPrompt - The custom prompt
  * @param {string} apiKey - The OpenAI API key
- * @returns {Promise<string>} - The generated analysis
+ * @returns {Promise<string>} The generated documentation
  */
 async function generateCustomAnalysis(codeContent, customPrompt, apiKey) {
-  const openai = new OpenAI({
-    apiKey: apiKey
+  const prompt = `
+# Custom Code Analysis
+
+${customPrompt}
+
+## Code to Analyze:
+
+\`\`\`
+${codeContent}
+\`\`\`
+
+Generate analysis based on the instructions and this code.
+`;
+
+  return await callOpenAI({
+    prompt,
+    apiKey,
+    temperature: 0.7,
   });
-  const spinner = ora('Generating custom analysis...').start();
-  
-  try {
-    const prompt = `
-    Please analyze the following repository code and respond to this specific request:
-    
-    ${customPrompt}
-    
-    Code:
-    ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
-    `;
-    
-    const systemMessage = "You are an AI assistant specialized in code analysis and documentation generation.";
-
-    const response = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 4000,
-    });
-
-    spinner.succeed(chalk.green('Custom analysis generated successfully'));
-    return response.data.choices[0].message.content || "Failed to generate custom analysis";
-  } catch (error) {
-    spinner.fail(chalk.red('Failed to generate custom analysis'));
-    console.error(chalk.red(`Error: ${error.message}`));
-    throw error;
-  }
 }
 
 /**
- * Generate a narrative story that explains complex code structures
+ * Generate a code story (narrative explanation)
  * @param {string} codeContent - The code content to analyze
  * @param {string} complexity - The complexity level (simple, moderate, detailed)
  * @param {string} apiKey - The OpenAI API key
- * @returns {Promise<string>} - The generated code story
+ * @returns {Promise<string>} The generated documentation
  */
-async function generateCodeStory(codeContent, complexity = 'moderate', apiKey) {
-  const openai = new OpenAI({
-    apiKey: apiKey
+async function generateCodeStory(codeContent, complexity, apiKey) {
+  let detailLevel, audience, technicalDepth;
+
+  switch (complexity) {
+    case 'simple':
+      detailLevel = 'high-level concepts and main functionality';
+      audience = 'non-technical or junior developers';
+      technicalDepth = 'minimal technical jargon and simplified explanations';
+      break;
+    case 'moderate':
+      detailLevel = 'balanced overview with some implementation details';
+      audience = 'intermediate developers';
+      technicalDepth = 'moderate technical depth with some architectural concepts';
+      break;
+    case 'detailed':
+      detailLevel = 'in-depth analysis of implementation details, edge cases, and design decisions';
+      audience = 'experienced developers familiar with the technologies used';
+      technicalDepth = 'deep technical insights, performance considerations, and architectural patterns';
+      break;
+    default:
+      detailLevel = 'balanced overview with some implementation details';
+      audience = 'intermediate developers';
+      technicalDepth = 'moderate technical depth with some architectural concepts';
+  }
+
+  const prompt = `
+# Code Story Generator
+
+Create a narrative explanation of the following codebase, focusing on ${detailLevel}. 
+Target audience: ${audience}.
+Technical depth: ${technicalDepth}.
+
+The narrative should:
+1. Tell the "story" of how this code works from a conceptual perspective
+2. Explain why certain design decisions were made
+3. Use metaphors and analogies to explain complex concepts where appropriate
+4. Follow a logical progression that helps the reader build a mental model
+5. Highlight important patterns and relationships between components
+
+Format as a Markdown document with clear headings, code examples, and diagrams descriptions where helpful.
+
+## Code to Analyze:
+
+\`\`\`
+${codeContent}
+\`\`\`
+
+Generate a ${complexity} complexity narrative explanation of this code.
+`;
+
+  return await callOpenAI({
+    prompt,
+    apiKey,
+    temperature: 0.7,
   });
-  const spinner = ora('Generating code story...').start();
-  
-  try {
-    // Customize the prompt based on complexity level
-    let detailLevel = '';
-    switch(complexity) {
-      case 'simple':
-        detailLevel = 'Keep explanations simple and beginner-friendly, focusing on high-level concepts rather than implementation details.';
-        break;
-      case 'moderate':
-        detailLevel = 'Balance technical details with narrative storytelling, making the code approachable to intermediate programmers.';
-        break;
-      case 'detailed':
-        detailLevel = 'Include detailed explanations of algorithms, patterns, and technical concepts, suitable for experienced developers.';
-        break;
-      default:
-        detailLevel = 'Balance technical details with narrative storytelling, making the code approachable to intermediate programmers.';
-        break;
-    }
-
-    const prompt = `
-    Please analyze the following code and create a narrative "Code Story" that explains the complex structures and logic in an engaging, storytelling format.
-    ${detailLevel}
-    
-    Use analogies, metaphors, and storytelling elements to make the code understandable.
-    Focus on the "why" behind design decisions, not just the "what" and "how".
-    Format the output as markdown with proper headings, code blocks for key examples, and narrative sections.
-    
-    Code:
-    ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
-    `;
-    
-    const systemMessage = "You are a master programmer and storyteller who excels at explaining complex code through narrative storytelling.";
-
-    const response = await openai.createChatCompletion({
-      model: "gpt-4",
-      messages: [
-        { role: "system", content: systemMessage },
-        { role: "user", content: prompt }
-      ],
-      max_tokens: 4000,
-    });
-
-    spinner.succeed(chalk.green('Code story generated successfully'));
-    return response.data.choices[0].message.content || "Failed to generate code story";
-  } catch (error) {
-    spinner.fail(chalk.red('Failed to generate code story'));
-    console.error(chalk.red(`Error: ${error.message}`));
-    throw error;
-  }
-}
-
-/**
- * Get OpenAI API key from environment or user input
- * @param {string} providedKey - The key provided by the user via CLI
- * @param {boolean} interactive - Whether to prompt the user for input if key not found
- * @returns {Promise<string|null>} - The API key or null if not found
- */
-async function getOpenAIKey(providedKey, interactive = true) {
-  // Check command line arg first
-  if (providedKey) {
-    return providedKey;
-  }
-  
-  // Then check environment variable
-  if (process.env.OPENAI_API_KEY) {
-    return process.env.OPENAI_API_KEY;
-  }
-  
-  // Check config file
-  try {
-    const os = require('os');
-    const path = require('path');
-    const fs = require('fs');
-    const configPath = path.join(os.homedir(), '.vibeinsights');
-    
-    if (fs.existsSync(configPath)) {
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      if (config.apiKey) {
-        return config.apiKey;
-      }
-    }
-  } catch (error) {
-    // Ignore config file errors
-  }
-  
-  // If interactive mode is enabled, prompt the user
-  if (interactive) {
-    try {
-      const inquirer = require('inquirer');
-      
-      console.log(chalk.yellow('\n🔑 OpenAI API Key Required'));
-      console.log(chalk.gray('This command requires an OpenAI API key to function.'));
-      console.log(chalk.gray('Your key will only be used for this session and not stored unless you specify.'));
-      
-      const answers = await inquirer.prompt([
-        {
-          type: 'password',
-          name: 'apiKey',
-          message: 'Enter your OpenAI API key:',
-          validate: (input) => input.length > 0 ? true : 'API key is required for this operation'
-        },
-        {
-          type: 'confirm',
-          name: 'saveKey',
-          message: 'Would you like to save this key for future use? (Saved to ~/.vibeinsights)',
-          default: false
-        }
-      ]);
-      
-      // Save the key if requested
-      if (answers.saveKey) {
-        try {
-          const os = require('os');
-          const path = require('path');
-          const fs = require('fs');
-          const configPath = path.join(os.homedir(), '.vibeinsights');
-          
-          const config = fs.existsSync(configPath) 
-            ? JSON.parse(fs.readFileSync(configPath, 'utf8')) 
-            : {};
-          
-          config.apiKey = answers.apiKey;
-          
-          fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-          console.log(chalk.green('✓ API key saved to ~/.vibeinsights'));
-        } catch (error) {
-          console.log(chalk.red(`Failed to save API key: ${error.message}`));
-        }
-      }
-      
-      return answers.apiKey;
-    } catch (error) {
-      console.log(chalk.red(`Error prompting for API key: ${error.message}`));
-      return null;
-    }
-  }
-  
-  // If we get here, no key was found and interactive mode is disabled
-  return null;
 }
 
 module.exports = {
   validateApiKey,
+  getOpenAIKey,
+  callOpenAI,
   generateArchitecturalDoc,
   generateUserStories,
   generateCustomAnalysis,
-  generateCodeStory,
-  getOpenAIKey
+  generateCodeStory
 };

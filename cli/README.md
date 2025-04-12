@@ -1,44 +1,99 @@
-# CodeInsight AI
+# Vibe Insights AI
 
-A comprehensive CLI tool for AI researchers that analyzes repositories, generates documentation, and integrates with OpenAI API.
+A comprehensive CLI tool for AI researchers that analyzes repositories, generates documentation, and integrates with OpenAI API to provide intelligent code insights.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/SaulBuilds/vibeinsights/main/assets/logo.png" alt="Vibe Insights AI Logo" width="200">
+</p>
+
+[![npm version](https://img.shields.io/npm/v/vibeinsights-ai.svg)](https://www.npmjs.com/package/vibeinsights-ai)
+[![license](https://img.shields.io/npm/l/vibeinsights-ai.svg)](https://github.com/SaulBuilds/vibeinsights/blob/main/LICENSE)
+[![Downloads](https://img.shields.io/npm/dt/vibeinsights-ai.svg)](https://www.npmjs.com/package/vibeinsights-ai)
 
 ## Features
 
-- **Repository Analysis**: Extract and analyze code from a directory
-- **OpenAI Integration**: Generate AI-powered documentation about repository architecture
-- **Multiple Documentation Types**: Generate architecture docs, user stories, code stories, or custom analysis
-- **Markdown Output**: All documentation is generated in markdown format for easy viewing and sharing
+- **GitHub Integration**: Authenticate with GitHub to analyze any public or private repository
+- **Local Analysis**: Analyze repositories on your local machine
+- **Code Extraction**: Extract and process codebases with intelligent filtering
+- **OpenAI Integration**: Generate AI-powered documentation using advanced LLMs
+- **Multiple Documentation Types**: 
+  - Architectural Documentation
+  - User Stories
+  - Code Story (Narrative Explanations)
+  - Custom Analysis with your own prompts
+- **Code Complexity Analysis**: Identify complex code with detailed metrics
+- **Dependency Analysis**: Visualize dependencies between files
+- **Semantic Code Search**: Find code concepts using natural language
+- **Tech Stack Detection**: Automatically identify languages, frameworks and libraries
 - **Terminal Rendering**: View documentation directly in your terminal with proper formatting
+- **Export Options**: Generate output in various formats (Markdown, HTML, JSON, CSV, DOT)
 
 ## Installation
 
-### Global Installation
+### Global Installation (Recommended)
 
 ```bash
-npm install -g codeinsight-ai
+npm install -g vibeinsights-ai
 ```
 
 ### Local Installation
 
 ```bash
-npm install codeinsight-ai
+npm install vibeinsights-ai
 ```
 
-## Usage
+### Running with npx
 
-### Analyze Repository
+```bash
+npx vibeinsights-ai
+```
+
+## Quick Start
+
+Run the interactive mode for a guided experience:
+
+```bash
+vibe
+```
+
+Or use specific commands for direct access to features:
+
+```bash
+# Analyze complexity metrics for a codebase
+vibe complexity ./my-project
+
+# Extract code from a repository
+vibe extract ./my-project
+
+# Generate documentation using OpenAI
+vibe generate-docs repo_id
+
+# Search code using natural language
+vibe search ./my-project
+```
+
+## Complete Command Reference
+
+### Interactive Mode
+
+Start interactive mode to guide you through the process:
+
+```bash
+vibe interactive
+```
+
+### Extract Code
 
 Extract and analyze code from a repository:
 
 ```bash
-codeinsight analyze [directory] --output analysis.md --exclude dist,build
+vibe extract [directory] --output analysis.md --exclude dist,build
 ```
 
 Options:
-- `--output, -o`: Output file name (default: "repo_analysis.txt")
+- `--output, -o`: Output file name
 - `--exclude, -x`: Additional exclusion pattern(s) (e.g., "dist,build")
 - `--max-size, -s`: Maximum file size in bytes to include
-- `--save`: Save analysis to server for future reference
 
 ### Generate Documentation
 
@@ -46,10 +101,16 @@ Generate documentation from repository code using OpenAI:
 
 ```bash
 # Generate architectural documentation
-codeinsight generate-docs <repository_id> --type architecture
+vibe generate-docs <repository_id> --type architecture
 
 # Generate narrative code story with moderate complexity
-codeinsight generate-docs <repository_id> --type code_story --complexity moderate
+vibe generate-docs <repository_id> --type code_story --complexity moderate
+
+# Generate user stories
+vibe generate-docs <repository_id> --type user_stories
+
+# Generate custom analysis
+vibe generate-docs <repository_id> --type custom --prompt "Your custom prompt here"
 ```
 
 Options:
@@ -63,7 +124,7 @@ Options:
 List all analyzed repositories:
 
 ```bash
-codeinsight list-repos
+vibe list-repos
 ```
 
 ### List Documentation
@@ -71,7 +132,7 @@ codeinsight list-repos
 List all documentation generated for a repository:
 
 ```bash
-codeinsight list-docs <repository_id>
+vibe list-docs <repository_id>
 ```
 
 ### View Document
@@ -79,13 +140,82 @@ codeinsight list-docs <repository_id>
 View a specific document in the terminal or save as markdown:
 
 ```bash
-codeinsight view-doc <document_id> --format terminal
+vibe view-doc <document_id> --format terminal
 ```
 
 Options:
-- `--format`: Output format: "terminal" or "markdown" (default: "terminal")
+- `--format`: Output format: "terminal" or "raw" (default: "terminal")
 
-## Code Story Feature
+### Analyze Code Complexity
+
+Analyze code complexity metrics:
+
+```bash
+vibe complexity <directory> --output json --threshold 15
+```
+
+Options:
+- `--output`: Output format (json, html, or csv)
+- `--threshold`: Complexity threshold for highlighting
+- `--language`: Filter by programming language
+- `--filter`: Pattern to filter files (glob syntax)
+- `--exclude`: Pattern to exclude files (glob syntax)
+- `--details`: Whether to show detailed breakdown by function/method
+
+### Analyze Dependencies
+
+Analyze dependencies between files in a codebase:
+
+```bash
+vibe analyze-deps <directory> --output dot --depth 10
+```
+
+Options:
+- `--output`: Output format (dot, json, or html)
+- `--depth`: Maximum depth for dependency analysis
+- `--filter`: Pattern to filter files (glob syntax)
+- `--exclude`: Pattern to exclude files (glob syntax)
+- `--highlight-circular`: Whether to highlight circular dependencies
+- `--show-external`: Whether to include external dependencies
+
+### Search Code
+
+Search for code patterns or concepts in a repository:
+
+```bash
+vibe search <directory> --query "database connection handling" --limit 10
+```
+
+Options:
+- `--query`: Search query
+- `--limit`: Maximum number of results
+- `--context`: Lines of context to show
+- `--api-key`: OpenAI API key for semantic search
+- `--use-embeddings`: Whether to use semantic search with embeddings
+
+### Detect Tech Stack
+
+Detect technology stack used in a repository:
+
+```bash
+vibe detect-stack <directory> --output text --scan-deps
+```
+
+Options:
+- `--output`: Output format (text, json, or md)
+- `--scan-deps`: Whether to perform deep dependency scanning
+- `--check-outdated`: Whether to check for outdated dependencies
+
+### GitHub Authentication
+
+```bash
+# Logout of GitHub
+vibe logout
+```
+
+## Advanced Features
+
+### Code Story Feature
 
 The Code Story feature transforms complex code structures into narrative explanations using OpenAI's language models. It helps developers and researchers understand intricate code by creating engaging stories that explain:
 
@@ -101,13 +231,68 @@ Choose from three complexity levels:
 
 Example usage:
 ```bash
-codeinsight generate-docs 1 --type code_story --complexity simple
+vibe generate-docs repo_id --type code_story --complexity simple
 ```
+
+### Semantic Code Search
+
+Find code patterns or concepts using natural language queries. This feature leverages OpenAI embeddings to understand semantic meaning:
+
+```bash
+vibe search ./my-project --query "error handling for API requests" --use-embeddings
+```
+
+### Tech Stack Detection
+
+Automatically identify the languages, frameworks, libraries, and build tools used in a project:
+
+```bash
+vibe detect-stack ./my-project --output md --scan-deps --check-outdated
+```
+
+This command generates a report that includes:
+- Primary programming languages
+- Frameworks in use
+- Libraries and dependencies
+- Build tools and configuration
+- Outdated packages that need updating
+- Recommendations for improvements
 
 ## Environment Variables
 
 - `OPENAI_API_KEY`: Your OpenAI API key
+- `GITHUB_CLIENT_ID`: Your GitHub OAuth app client ID
+- `GITHUB_CLIENT_SECRET`: Your GitHub OAuth app client secret
+
+## Configuration
+
+Vibe Insights AI stores configuration and generated content in:
+
+```
+~/.vibeinsights/
+```
+
+This includes:
+- `repositories/`: Cloned and analyzed repositories
+- `documents/`: Generated documentation
+- `github-token.json`: Stored GitHub auth token
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the project
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
 MIT
+
+## Connect
+
+- [GitHub](https://github.com/SaulBuilds/vibeinsights)
+- [Twitter](https://x.com/saul_loveman)
+- [npm](https://www.npmjs.com/package/vibeinsights-ai)
