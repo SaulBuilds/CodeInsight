@@ -73,6 +73,17 @@ export default function DocsIndex() {
               </div>
             </Link>
             
+            <Link href="/docs/GitHub">
+              <div className="cursor-pointer">
+                <FeatureCard
+                  icon="github"
+                  title="GitHub Integration"
+                  description="Connect with GitHub to analyze your repositories or any public repositories using OAuth authentication."
+                  className="transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 h-full"
+                />
+              </div>
+            </Link>
+            
             <Link href="/docs/dependency-analysis">
               <div className="cursor-pointer">
                 <FeatureCard

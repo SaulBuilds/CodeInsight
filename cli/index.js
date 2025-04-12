@@ -8,842 +8,243 @@
 
 const fs = require('fs');
 const path = require('path');
+const { promisify } = require('util');
 const { program } = require('commander');
 const chalk = require('chalk');
-const ora = require('ora');
 const boxen = require('boxen');
-const inquirer = require('inquirer');
-const dotenv = require('dotenv');
+const ora = require('ora');
 const { marked } = require('marked');
 const TerminalRenderer = require('marked-terminal');
-const axios = require('axios');
-const { VERSION, VERSION_INFO } = require('./version');
-const { 
-  validateApiKey, 
-  generateArchitecturalDoc, 
-  generateUserStories, 
-  generateCustomAnalysis, 
-  generateCodeStory,
-  getOpenAIKey 
-} = require('./openai-utils');
-const { analyzeDependencies } = require('./dep-analyzer');
-const { analyzeComplexity } = require('./complexity-analyzer');
-const { searchCodebase, formatSearchResults } = require('./search');
-const { detectTechStack } = require('./tech-detector');
+const dotenv = require('dotenv');
+const { glob } = require('glob');
+const os = require('os');
+const inquirer = require('inquirer');
+const fsExtra = require('fs-extra');
+const simpleGit = require('simple-git');
 
-// Load environment variables from .env file
+// Load environment variables
 dotenv.config();
 
-// Configure marked to use the terminal renderer
+// Custom utilities
+const { validateApiKey, getOpenAIKey, generateArchitecturalDoc, generateUserStories, generateCustomAnalysis, generateCodeStory } = require('./openai-utils');
+const { analyzeComplexity } = require('./complexity-analyzer');
+const { analyzeDependencies } = require('./dep-analyzer');
+const { searchCodebase } = require('./search');
+const { detectTechStack } = require('./tech-detector');
+const { authenticate, fetchUserRepositories, cloneRepository, selectRepository, logout } = require('./github-auth');
+
+// Configure marked with terminal renderer
 marked.setOptions({
-  renderer: new TerminalRenderer()
+  renderer: new TerminalRenderer(),
 });
 
-// Set up commander with version and description
-program
-  .version(VERSION)
-  .description(VERSION_INFO.description);
+// User home directory for config/data storage
+const USER_HOME = os.homedir();
+const DATA_DIR = path.join(USER_HOME, '.codeinsight');
+const REPO_DIR = path.join(DATA_DIR, 'repositories');
+const DOCS_DIR = path.join(DATA_DIR, 'documents');
+const TEMP_DIR = path.join(DATA_DIR, 'temp');
 
-// Configure analyze command
-program
-  .command('analyze [directory]')
-  .description('Analyze repository and extract code for AI analysis')
-  .option('-o, --output <file>', 'Output file name', 'repo_analysis.txt')
-  .option('-x, --exclude <pattern...>', 'Additional exclusion pattern(s) (e.g., "dist,build")')
-  .option('-s, --max-size <size>', 'Maximum file size in bytes to include')
-  .option('--save', 'Save analysis to server for future reference')
-  .action(async (directory = '.', options) => {
-    try {
-      const spinner = ora('Analyzing repository...').start();
-      const result = await extractRepositoryCode({ 
-        directory: path.resolve(process.cwd(), directory),
-        output: options.output,
-        exclude: options.exclude?.toString().split(',') || [],
-        maxSize: options.maxSize ? parseInt(options.maxSize, 10) : null
-      });
-      
-      spinner.succeed(chalk.green('Repository analysis complete'));
-      
-      console.log(boxen(
-        chalk.bold.blue('Repository Analysis Results\n') +
-        `Files processed: ${chalk.cyan(result.stats.totalFiles)}\n` +
-        `Files included: ${chalk.cyan(result.stats.includedFiles)}\n` +
-        `Files excluded: ${chalk.cyan(result.stats.excludedFiles)}\n` +
-        `Total size: ${chalk.cyan(formatBytes(result.stats.totalSizeBytes))}\n` +
-        `Included size: ${chalk.cyan(formatBytes(result.stats.includedSizeBytes))}\n\n` +
-        `Output file: ${chalk.green(result.outputFile)}`,
-        { padding: 1, borderColor: 'blue', dimBorder: true }
-      ));
-
-      if (options.save) {
-        const saveSpinner = ora('Saving analysis to server...').start();
-        try {
-          // Logic for saving to server would go here
-          // This would typically be an API call to the server
-          saveSpinner.succeed(chalk.green('Analysis saved to server'));
-          console.log(`Repository ID: ${chalk.cyan(1)}`); // This would be the actual ID returned from the server
-        } catch (error) {
-          saveSpinner.fail(chalk.red('Failed to save analysis to server'));
-          console.error(chalk.red(`Error: ${error.message}`));
-        }
-      }
-    } catch (error) {
-      ora().fail(chalk.red('Repository analysis failed'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Configure generate-docs command
-program
-  .command('generate-docs <repository_id>')
-  .description('Generate documentation from repository code using OpenAI')
-  .option('--type <type>', 'Type of documentation to generate (architecture, user_stories, code_story, custom)', 'architecture')
-  .option('--complexity <level>', 'Complexity level for code story (simple, moderate, detailed)', 'moderate')
-  .option('--prompt <prompt>', 'Custom prompt for documentation generation (required if type=custom)')
-  .option('--api-key <key>', 'OpenAI API key (will use OPENAI_API_KEY environment variable if not provided)')
-  .action(async (repositoryId, options) => {
-    try {
-      // Validate repository ID
-      if (isNaN(parseInt(repositoryId))) {
-        console.error(chalk.red('Error: Repository ID must be a number'));
-        return;
-      }
-
-      // Validate documentation type
-      const validTypes = ['architecture', 'user_stories', 'code_story', 'custom'];
-      if (!validTypes.includes(options.type)) {
-        console.error(chalk.red(`Error: Invalid documentation type. Must be one of: ${validTypes.join(', ')}`));
-        return;
-      }
-      
-      // Validate complexity level for code_story
-      if (options.type === 'code_story') {
-        const validComplexity = ['simple', 'moderate', 'detailed'];
-        if (!validComplexity.includes(options.complexity)) {
-          console.error(chalk.red(`Error: Invalid complexity level. Must be one of: ${validComplexity.join(', ')}`));
-          return;
-        }
-      }
-
-      // If type is custom, prompt must be provided
-      if (options.type === 'custom' && !options.prompt) {
-        console.error(chalk.red('Error: Custom prompt is required when type is "custom"'));
-        return;
-      }
-
-      // Get API key - now interactive
-      try {
-        const apiKey = await getOpenAIKey(options.apiKey, true);
-        if (!apiKey) {
-          console.error(chalk.red('Error: OpenAI API key is required but none was provided.'));
-          console.log(chalk.yellow('You can provide it via:'));
-          console.log(chalk.gray('- Command line: --api-key=your_key'));
-          console.log(chalk.gray('- Environment: export OPENAI_API_KEY=your_key'));
-          console.log(chalk.gray('- Config file: create ~/.codeinsight file with {"apiKey": "your_key"}'));
-          return;
-        }
-        
-        // Validate API key
-        const validatingSpinner = ora('Validating OpenAI API key...').start();
-        const isValid = await validateApiKey(apiKey);
-        if (!isValid) {
-          validatingSpinner.fail(chalk.red('Invalid OpenAI API key'));
-          return;
-        }
-        validatingSpinner.succeed(chalk.green('OpenAI API key is valid'));
-
-        // Get repository code
-        const codeSpinner = ora('Retrieving repository code...').start();
-        const codeContent = await getRepositoryCode(repositoryId);
-        if (!codeContent) {
-          codeSpinner.fail(chalk.red(`Repository with ID ${repositoryId} not found`));
-          return;
-        }
-        codeSpinner.succeed(chalk.green('Repository code retrieved successfully'));
-
-        // Generate documentation based on type
-        let documentation;
-        if (options.type === 'architecture') {
-          documentation = await generateArchitecturalDoc(codeContent, apiKey);
-        } else if (options.type === 'user_stories') {
-          documentation = await generateUserStories(codeContent, apiKey);
-        } else if (options.type === 'code_story') {
-          documentation = await generateCodeStory(codeContent, options.complexity, apiKey);
-        } else if (options.type === 'custom') {
-          documentation = await generateCustomAnalysis(codeContent, options.prompt, apiKey);
-        }
-
-        // Save documentation to file
-        const filename = `${options.type}_doc_${repositoryId}.md`;
-        fs.writeFileSync(filename, documentation);
-        
-        console.log(boxen(
-          chalk.bold.blue('Documentation Generated\n') +
-          `Type: ${chalk.cyan(options.type)}\n` +
-          `Output file: ${chalk.green(filename)}\n\n` +
-          chalk.dim('Preview (first 500 characters):\n') +
-          chalk.white(documentation.substring(0, 500) + '...'),
-          { padding: 1, borderColor: 'blue', dimBorder: true }
-        ));
-
-        const { viewFull } = await inquirer.prompt([{
-          type: 'confirm',
-          name: 'viewFull',
-          message: 'Would you like to view the full documentation?',
-          default: false
-        }]);
-
-        if (viewFull) {
-          console.log('\n' + marked(documentation));
-        }
-      } catch (error) {
-        ora().fail(chalk.red('Documentation generation failed'));
-        console.error(chalk.red(`Error: ${error.message}`));
-      }
-    }
-  });
-
-// Configure list-repos command
-program
-  .command('list-repos')
-  .description('List all analyzed repositories')
-  .action(async () => {
-    try {
-      const spinner = ora('Fetching repositories...').start();
-      // This would typically be an API call to get repositories from the server
-      const repositories = [
-        { 
-          id: 1, 
-          name: 'example-repo', 
-          path: '/home/user/projects/example-repo',
-          files_count: 120,
-          code_size: 2415612,
-          analyzed_at: new Date().toISOString()
-        }
-      ];
-      
-      spinner.succeed(chalk.green('Repositories retrieved successfully'));
-      
-      if (repositories.length === 0) {
-        console.log(chalk.yellow('No repositories found. Use "codeinsight analyze" to analyze a repository.'));
-        return;
-      }
-
-      console.log(chalk.bold.blue('\nRepositories:'));
-      console.log(chalk.blue('-'.repeat(60)));
-      
-      repositories.forEach(repo => {
-        console.log(
-          `ID: ${chalk.cyan(repo.id)}\n` +
-          `Name: ${chalk.white(repo.name)}\n` +
-          `Path: ${chalk.white(repo.path)}\n` +
-          `Files: ${chalk.white(repo.files_count)}\n` +
-          `Size: ${chalk.white(formatBytes(repo.code_size))}\n` +
-          `Analyzed: ${chalk.white(formatDate(repo.analyzed_at))}\n` +
-          chalk.blue('-'.repeat(60))
-        );
-      });
-    } catch (error) {
-      ora().fail(chalk.red('Failed to retrieve repositories'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Configure list-docs command
-program
-  .command('list-docs <repository_id>')
-  .description('List all documentation generated for a repository')
-  .action(async (repositoryId) => {
-    try {
-      // Validate repository ID
-      if (isNaN(parseInt(repositoryId))) {
-        console.error(chalk.red('Error: Repository ID must be a number'));
-        return;
-      }
-
-      const spinner = ora(`Fetching documentation for repository ${repositoryId}...`).start();
-      // This would typically be an API call to get documentation from the server
-      const documents = [
-        { 
-          id: 1, 
-          type: 'architecture',
-          ai_model: 'gpt-4o',
-          created_at: new Date().toISOString()
-        },
-        { 
-          id: 2, 
-          type: 'user_stories',
-          ai_model: 'gpt-4o',
-          created_at: new Date().toISOString()
-        }
-      ];
-      
-      spinner.succeed(chalk.green('Documentation retrieved successfully'));
-      
-      if (documents.length === 0) {
-        console.log(chalk.yellow(`No documentation found for repository ${repositoryId}. Use "codeinsight generate-docs ${repositoryId}" to generate documentation.`));
-        return;
-      }
-
-      console.log(chalk.bold.blue('\nDocumentation:'));
-      console.log(chalk.blue('-'.repeat(60)));
-      
-      documents.forEach(doc => {
-        console.log(
-          `ID: ${chalk.cyan(doc.id)}\n` +
-          `Type: ${chalk.white(doc.type)}\n` +
-          `AI Model: ${chalk.white(doc.ai_model)}\n` +
-          `Created: ${chalk.white(formatDate(doc.created_at))}\n` +
-          chalk.blue('-'.repeat(60))
-        );
-      });
-    } catch (error) {
-      ora().fail(chalk.red('Failed to retrieve documentation'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Configure view-doc command
-program
-  .command('view-doc <document_id>')
-  .description('View a specific document')
-  .option('--format <format>', 'Output format: "terminal" or "markdown" (default: "terminal")', 'terminal')
-  .action(async (documentId, options) => {
-    try {
-      // Validate document ID
-      if (isNaN(parseInt(documentId))) {
-        console.error(chalk.red('Error: Document ID must be a number'));
-        return;
-      }
-
-      const spinner = ora(`Fetching document ${documentId}...`).start();
-      const document = await viewDocument(documentId, options.format);
-      
-      if (!document) {
-        spinner.fail(chalk.red(`Document with ID ${documentId} not found`));
-        return;
-      }
-      
-      spinner.succeed(chalk.green('Document retrieved successfully'));
-      
-      if (options.format === 'markdown') {
-        // Write to a markdown file
-        const filename = `doc_${documentId}.md`;
-        fs.writeFileSync(filename, document);
-        console.log(chalk.green(`Document saved to ${filename}`));
-      } else {
-        // Display in terminal
-        console.log('\n' + marked(document));
-      }
-    } catch (error) {
-      ora().fail(chalk.red('Failed to retrieve document'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Configure analyze-deps command (Dependency Graph Analysis)
-program
-  .command('analyze-deps [directory]')
-  .description('Analyze dependencies between files in a repository')
-  .option('-o, --output <format>', 'Output format: dot, json, html (default: "html")', 'html')
-  .option('-d, --depth <level>', 'Maximum depth for dependency analysis', '10')
-  .option('-f, --filter <pattern>', 'Filter files by pattern (glob syntax)')
-  .option('--exclude <pattern>', 'Exclude files by pattern (glob syntax)')
-  .option('--highlight-circular', 'Highlight circular dependencies', false)
-  .option('--show-external', 'Include external dependencies', false)
-  .action(async (directory = '.', options) => {
-    try {
-      const spinner = ora('Analyzing dependencies...').start();
-      
-      const result = await analyzeDependencies({
-        directory: path.resolve(process.cwd(), directory),
-        output: options.output,
-        depth: parseInt(options.depth, 10),
-        filter: options.filter,
-        exclude: options.exclude,
-        highlightCircular: options.highlightCircular,
-        showExternal: options.showExternal
-      });
-      
-      spinner.succeed(chalk.green('Dependency analysis completed'));
-      
-      // Save the result to a file based on the format
-      const filename = `dependencies.${options.output === 'dot' ? 'dot' : (options.output === 'json' ? 'json' : 'html')}`;
-      fs.writeFileSync(filename, result.result);
-      
-      console.log(boxen(
-        chalk.bold.blue('Dependency Analysis Results\n') +
-        `Files analyzed: ${chalk.cyan(Object.keys(result.dependencies).length)}\n` +
-        `Output format: ${chalk.cyan(options.output)}\n` +
-        `Output file: ${chalk.green(filename)}${options.highlightCircular ? '\n' + 
-        `Circular dependencies: ${chalk.yellow(result.circularDependencies.length)}` : ''}`,
-        { padding: 1, borderColor: 'blue', dimBorder: true }
-      ));
-      
-      // Open in browser if HTML format
-      if (options.output === 'html') {
-        const { openBrowser } = await inquirer.prompt([{
-          type: 'confirm',
-          name: 'openBrowser',
-          message: 'Would you like to open the HTML report in your browser?',
-          default: false
-        }]);
-        
-        if (openBrowser) {
-          console.log(chalk.blue('Opening dependency graph in browser...'));
-          // This would typically use a module like 'open' to open the file in a browser
-          console.log(chalk.yellow(`To view the graph, open the file: ${filename}`));
-        }
-      }
-    } catch (error) {
-      ora().fail(chalk.red('Dependency analysis failed'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Configure complexity command (Code Complexity Metrics)
-program
-  .command('complexity [directory]')
-  .description('Calculate code complexity metrics for a repository')
-  .option('-o, --output <format>', 'Output format: json, html, csv (default: "html")', 'html')
-  .option('-t, --threshold <number>', 'Complexity threshold for highlighting', '10')
-  .option('-l, --language <language>', 'Filter by programming language')
-  .option('-f, --filter <pattern>', 'Filter files by pattern (glob syntax)')
-  .option('--exclude <pattern>', 'Exclude files by pattern (glob syntax)')
-  .option('--details', 'Show detailed breakdown by function/method', false)
-  .action(async (directory = '.', options) => {
-    try {
-      const spinner = ora('Calculating complexity metrics...').start();
-      
-      const result = await analyzeComplexity({
-        directory: path.resolve(process.cwd(), directory),
-        output: options.output,
-        threshold: parseInt(options.threshold, 10),
-        language: options.language,
-        filter: options.filter,
-        exclude: options.exclude,
-        details: options.details
-      });
-      
-      spinner.succeed(chalk.green('Complexity analysis completed'));
-      
-      // Save the result to a file based on the format
-      const filename = `complexity.${options.output === 'json' ? 'json' : (options.output === 'csv' ? 'csv' : 'html')}`;
-      fs.writeFileSync(filename, result.formattedOutput);
-      
-      // Get summary statistics
-      const { totalFiles, averageComplexity, highComplexityFiles, highComplexityPercentage } = result.summary;
-      
-      // Show results summary
-      console.log(boxen(
-        chalk.bold.blue('Code Complexity Analysis Results\n') +
-        `Files analyzed: ${chalk.cyan(totalFiles)}\n` +
-        `Average complexity: ${chalk.cyan(averageComplexity.toFixed(2))}\n` +
-        `Files with high complexity (>${options.threshold}): ${chalk.yellow(highComplexityFiles)} (${chalk.yellow(highComplexityPercentage.toFixed(1))}%)\n` +
-        `Output format: ${chalk.cyan(options.output)}\n` +
-        `Output file: ${chalk.green(filename)}`,
-        { padding: 1, borderColor: 'blue', dimBorder: true }
-      ));
-      
-      // List top 5 most complex files
-      if (totalFiles > 0) {
-        const topFiles = Object.entries(result.results)
-          .sort((a, b) => b[1].cyclomaticComplexity - a[1].cyclomaticComplexity)
-          .slice(0, 5);
-        
-        if (topFiles.length > 0) {
-          console.log(chalk.bold.blue('\nTop 5 Most Complex Files:'));
-          console.log(chalk.blue('-'.repeat(60)));
-          
-          topFiles.forEach(([file, metrics]) => {
-            console.log(
-              `${chalk.white(file)}\n` +
-              `Cyclomatic Complexity: ${getColorForComplexity(metrics.cyclomaticComplexity, options.threshold)(metrics.cyclomaticComplexity)}\n` +
-              `Lines: ${chalk.white(metrics.nonEmptyLineCount)} (${chalk.white(metrics.sizeCategory)})\n` +
-              chalk.blue('-'.repeat(60))
-            );
-          });
-        }
-      }
-      
-      // Open in browser if HTML format
-      if (options.output === 'html') {
-        const { openBrowser } = await inquirer.prompt([{
-          type: 'confirm',
-          name: 'openBrowser',
-          message: 'Would you like to open the HTML report in your browser?',
-          default: false
-        }]);
-        
-        if (openBrowser) {
-          console.log(chalk.blue('Opening complexity report in browser...'));
-          // This would typically use a module like 'open' to open the file in a browser
-          console.log(chalk.yellow(`To view the report, open the file: ${filename}`));
-        }
-      }
-    } catch (error) {
-      ora().fail(chalk.red('Complexity analysis failed'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Helper function for complexity color coding
-function getColorForComplexity(value, threshold) {
-  const highThreshold = threshold;
-  const mediumThreshold = threshold / 2;
-  
-  if (value >= highThreshold) {
-    return chalk.red;
-  } else if (value >= mediumThreshold) {
-    return chalk.yellow;
-  } else {
-    return chalk.green;
+// Create data directories if they don't exist
+[DATA_DIR, REPO_DIR, DOCS_DIR, TEMP_DIR].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
+});
+
+// Error handling function
+function handleError(error, message = 'An error occurred') {
+  console.error(chalk.red(`\n${message}:`));
+  console.error(chalk.red(error.message || error));
+  process.exit(1);
 }
 
-// Configure search command (Natural Language Search)
-program
-  .command('search <query>')
-  .description('Search the codebase using natural language')
-  .option('-d, --directory <path>', 'Repository directory to search', '.')
-  .option('-n, --limit <number>', 'Maximum number of results', '10')
-  .option('-c, --context <number>', 'Lines of context to show', '3')
-  .option('-o, --output <format>', 'Output format: text, json, html (default: "text")', 'text')
-  .option('--api-key <key>', 'OpenAI API key')
-  .option('--no-embeddings', 'Use simple text search instead of embeddings', false)
-  .action(async (query, options) => {
-    try {
-      let searchResult;
-      const directoryPath = path.resolve(process.cwd(), options.directory);
+// Display application header/branding
+function displayHeader() {
+  const headerText = chalk.bold.blue(
+    '╔══════════════════════════════════════════════════╗\n' +
+    '║                 CodeInsight AI                   ║\n' +
+    '╚══════════════════════════════════════════════════╝'
+  );
+  
+  const subText = chalk.gray('Repository Analysis & Documentation Tool');
+  
+  console.log(boxen(`${headerText}\n${subText}`, {
+    padding: 1,
+    margin: 1,
+    borderStyle: 'round',
+    borderColor: 'blue'
+  }));
+}
 
-      // First check if we need to get the API key for semantic search
-      if (options.embeddings) {
-        try {
-          const apiKey = await getOpenAIKey(options.apiKey, true);
-          if (!apiKey) {
-            console.error(chalk.red('Error: OpenAI API key is required for semantic search.'));
-            console.log(chalk.yellow('Try again with --no-embeddings to use simple text search instead.'));
-            return;
-          }
-          
-          // Perform semantic search with OpenAI embeddings
-          const spinner = ora('Performing semantic code search...').start();
-          
-          searchResult = await searchCodebase({
-            query,
-            directory: directoryPath,
-            limit: parseInt(options.limit, 10),
-            context: parseInt(options.context, 10),
-            apiKey,
-            useEmbeddings: true
-          });
-          
-          spinner.succeed(chalk.green('Semantic search completed'));
-        } catch (error) {
-          ora().fail(chalk.red('Semantic search failed'));
-          console.error(chalk.red(`Error: ${error.message}`));
-          
-          // Fall back to simple search
-          console.log(chalk.yellow('Falling back to simple text search...'));
-          
-          const fallbackSpinner = ora(`Searching for "${query}" using simple text search...`).start();
-          
-          searchResult = await searchCodebase({
-            query,
-            directory: directoryPath,
-            limit: parseInt(options.limit, 10),
-            context: parseInt(options.context, 10),
-            useEmbeddings: false
-          });
-          
-          fallbackSpinner.succeed(chalk.green('Simple search completed'));
-        }
-      } else {
-        // Use simple text search without API
-        const spinner = ora(`Searching for "${query}"...`).start();
-        
-        searchResult = await searchCodebase({
-          query,
-          directory: directoryPath,
-          limit: parseInt(options.limit, 10),
-          context: parseInt(options.context, 10),
-          useEmbeddings: false
-        });
-        
-        spinner.succeed(chalk.green('Search completed'));
-      }
-      
-      // Format and display the results
-      const formattedOutput = formatSearchResults(searchResult, options.output);
-      
-      // For non-text formats, save to file
-      if (options.output !== 'text') {
-        const filename = `search_results.${options.output}`;
-        fs.writeFileSync(filename, formattedOutput);
-        console.log(chalk.green(`Search results saved to ${filename}`));
-        
-        // Open in browser if HTML format
-        if (options.output === 'html') {
-          const { openBrowser } = await inquirer.prompt([{
-            type: 'confirm',
-            name: 'openBrowser',
-            message: 'Would you like to open the HTML results in your browser?',
-            default: false
-          }]);
-          
-          if (openBrowser) {
-            console.log(chalk.blue('Opening search results in browser...'));
-            // This would typically use a module like 'open' to open the file in a browser
-            console.log(chalk.yellow(`To view the results, open the file: ${filename}`));
-          }
-        }
-      } else {
-        // Display in terminal for text format
-        console.log(formattedOutput);
-      }
-      
-    } catch (error) {
-      ora().fail(chalk.red('Search failed'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Configure detect-stack command (Tech Stack Detection)
-program
-  .command('detect-stack [directory]')
-  .description('Detect technologies, frameworks and libraries used in a repository')
-  .option('-o, --output <format>', 'Output format: json, html, markdown (default: "markdown")', 'markdown')
-  .option('--check-outdated', 'Check for outdated dependencies', false)
-  .option('--recommendations', 'Show recommendations for additional tools', false)
-  .action(async (directory = '.', options) => {
-    try {
-      const spinner = ora('Detecting tech stack...').start();
-      
-      const result = await detectTechStack({
-        directory: path.resolve(process.cwd(), directory),
-        output: options.output,
-        checkOutdated: options.checkOutdated,
-        recommendations: options.recommendations
-      });
-      
-      spinner.succeed(chalk.green('Tech stack detection completed'));
-      
-      // Save the result to a file based on the format
-      const filename = `tech_stack.${options.output === 'json' ? 'json' : (options.output === 'html' ? 'html' : 'md')}`;
-      fs.writeFileSync(filename, result.formattedOutput);
-      
-      // Show summary of detected technologies
-      const { languages, frameworks, databases, tools } = result.result;
-      
-      console.log(boxen(
-        chalk.bold.blue('Tech Stack Detection Results\n') +
-        `Languages: ${chalk.cyan(Object.keys(languages).length > 0 ? Object.keys(languages).join(', ') : 'None detected')}\n` +
-        `Frameworks: ${chalk.cyan(Object.keys(frameworks).length > 0 ? Object.keys(frameworks).join(', ') : 'None detected')}\n` +
-        `Databases: ${chalk.cyan(Object.keys(databases).length > 0 ? Object.keys(databases).join(', ') : 'None detected')}\n` +
-        `Tools: ${chalk.cyan(Object.keys(tools).length > 0 ? Object.keys(tools).join(', ') : 'None detected')}\n` +
-        `${options.checkOutdated ? `Outdated Dependencies: ${chalk.yellow(Object.keys(result.result.outdatedDependencies).length)}\n` : ''}` +
-        `${options.recommendations ? `Recommendations: ${chalk.yellow(Object.keys(result.result.recommendations).length)}\n` : ''}` +
-        `Output file: ${chalk.green(filename)}`,
-        { padding: 1, borderColor: 'blue', dimBorder: true }
-      ));
-      
-      // Open in browser if HTML format
-      if (options.output === 'html') {
-        const { openBrowser } = await inquirer.prompt([{
-          type: 'confirm',
-          name: 'openBrowser',
-          message: 'Would you like to open the HTML report in your browser?',
-          default: false
-        }]);
-        
-        if (openBrowser) {
-          console.log(chalk.blue('Opening tech stack report in browser...'));
-          // This would typically use a module like 'open' to open the file in a browser
-          console.log(chalk.yellow(`To view the report, open the file: ${filename}`));
-        }
-      }
-    } catch (error) {
-      ora().fail(chalk.red('Tech stack detection failed'));
-      console.error(chalk.red(`Error: ${error.message}`));
-    }
-  });
-
-// Parse arguments
-program.parse(process.argv);
-
-// Show help if no arguments provided
-if (!process.argv.slice(2).length) {
-  program.outputHelp();
+// Apply colorization to complexity values
+function getColorForComplexity(value, threshold) {
+  if (value < threshold * 0.5) return chalk.green(value);
+  if (value < threshold) return chalk.yellow(value);
+  return chalk.red(value);
 }
 
 /**
  * Extract all code files from a repository and combine them into a single string
  */
 async function extractRepositoryCode({ directory, output, exclude = [], maxSize = null }) {
-  return new Promise((resolve, reject) => {
-    try {
-      const outputFile = path.resolve(directory, output);
-      const stats = {
-        totalFiles: 0,
-        includedFiles: 0,
-        excludedFiles: 0,
-        totalSizeBytes: 0,
-        includedSizeBytes: 0,
-        fileTypes: {}
-      };
-
-      // Initialize output file
-      if (fs.existsSync(outputFile)) {
-        fs.unlinkSync(outputFile);
-      }
-      fs.writeFileSync(outputFile, `# Repository Analysis\n\n`);
-      fs.appendFileSync(outputFile, `Generated on: ${new Date().toISOString()}\n\n`);
-
-      // Helper: Determine whether a file path should be excluded
-      function isExcluded(filePath) {
-        // Default exclusions
-        const defaultExclusions = ['.git', 'node_modules', 'dist', '.idea', '.vscode'];
-        
-        // Exclude if any part of the path starts with a dot (hidden files/folders)
-        if (filePath.split(path.sep).some(part => part.startsWith('.') && part !== '.')) {
-          return true;
+  try {
+    const spinner = ora('Extracting code from repository...').start();
+    
+    if (!fs.existsSync(directory)) {
+      spinner.fail();
+      throw new Error(`Directory '${directory}' does not exist`);
+    }
+    
+    let extractedCode = '';
+    let totalFiles = 0;
+    let totalSize = 0;
+    const filePaths = [];
+    
+    // Convert exclude patterns to array if string
+    if (typeof exclude === 'string') {
+      exclude = exclude.split(',').map(p => p.trim());
+    }
+    
+    // Add common excludes if none specified
+    if (exclude.length === 0) {
+      exclude = ['node_modules', '.git', 'dist', 'build', '*.min.js', '*.map'];
+    }
+    
+    // Check if path should be excluded
+    function isExcluded(filePath) {
+      const relativePath = path.relative(directory, filePath);
+      
+      return exclude.some(pattern => {
+        // Exact match
+        if (relativePath === pattern) return true;
+        // Wildcard pattern
+        if (pattern.includes('*')) {
+          const regexPattern = pattern
+            .replace(/\./g, '\\.')
+            .replace(/\*/g, '.*');
+          return new RegExp(`^${regexPattern}$`).test(relativePath);
         }
+        // Directory match (any depth)
+        return relativePath.split(path.sep).includes(pattern);
+      });
+    }
+    
+    // Check if file is a text file (not binary)
+    function isTextFile(filePath) {
+      const extension = path.extname(filePath).toLowerCase();
+      const textExtensions = [
+        '.js', '.jsx', '.ts', '.tsx', '.py', '.rb', '.java', '.c', '.cpp', '.h',
+        '.cs', '.php', '.go', '.rs', '.swift', '.kt', '.scala', '.md', '.json',
+        '.yaml', '.yml', '.txt', '.html', '.htm', '.css', '.scss', '.less',
+        '.sh', '.bash', '.zsh', '.xml', '.toml', '.ini', '.cfg', '.conf'
+      ];
+      
+      return textExtensions.includes(extension);
+    }
+    
+    // Recursive directory traversal
+    function traverseDirectory(dirPath) {
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
         
-        // Exclude if path contains any of the default exclusions
-        if (defaultExclusions.some(pattern => filePath.includes(`${path.sep}${pattern}${path.sep}`) || filePath.includes(`${path.sep}${pattern}`))) {
-          return true;
-        }
+        if (isExcluded(fullPath)) continue;
         
-        // Exclude the CLI script file itself and the output file
-        if (filePath === __filename || filePath === outputFile) {
-          return true;
-        }
-        
-        // Exclude if additional exclusion patterns match anywhere in the file's path
-        return exclude.some(pattern => filePath.includes(pattern));
-      }
-
-      // Helper: Check if a file is a text file (not binary)
-      function isTextFile(filePath) {
-        try {
-          const content = fs.readFileSync(filePath);
-          // If a null character (0) is present, assume it's binary
-          return !content.includes(0);
-        } catch (err) {
-          return false;
-        }
-      }
-
-      // Recursively traverse directories
-      function traverseDirectory(dirPath) {
-        const files = fs.readdirSync(dirPath);
-        
-        for (const file of files) {
-          const fullPath = path.join(dirPath, file);
-          const stat = fs.statSync(fullPath);
-          
-          if (stat.isDirectory()) {
-            if (!isExcluded(fullPath)) {
-              traverseDirectory(fullPath);
-            }
-          } else if (stat.isFile()) {
-            stats.totalFiles++;
-            stats.totalSizeBytes += stat.size;
+        if (entry.isDirectory()) {
+          traverseDirectory(fullPath);
+        } else if (entry.isFile() && isTextFile(fullPath)) {
+          try {
+            const stats = fs.statSync(fullPath);
             
-            if (isExcluded(fullPath)) {
-              stats.excludedFiles++;
+            // Skip files larger than maxSize
+            if (maxSize && stats.size > maxSize) {
               continue;
             }
             
-            // If maxSize is set, skip file if it exceeds the threshold
-            if (maxSize && stat.size > maxSize) {
-              stats.excludedFiles++;
-              continue;
-            }
-            
-            if (isTextFile(fullPath)) {
-              const relativePath = path.relative(directory, fullPath);
-              const fileExtension = path.extname(fullPath).toLowerCase();
-              
-              // Update file type statistics
-              if (fileExtension) {
-                stats.fileTypes[fileExtension] = (stats.fileTypes[fileExtension] || 0) + 1;
-              }
-              
-              // Append file content to the output file
-              fs.appendFileSync(outputFile, `## File: ${relativePath}\n\n`);
-              const content = fs.readFileSync(fullPath, 'utf8');
-              fs.appendFileSync(outputFile, '```' + (fileExtension.slice(1) || '') + '\n');
-              fs.appendFileSync(outputFile, content + '\n');
-              fs.appendFileSync(outputFile, '```\n\n');
-              
-              stats.includedFiles++;
-              stats.includedSizeBytes += stat.size;
-            } else {
-              stats.excludedFiles++;
-            }
+            filePaths.push(fullPath);
+            totalFiles++;
+            totalSize += stats.size;
+          } catch (error) {
+            console.error(`Error reading file ${fullPath}:`, error.message);
           }
         }
       }
-      
-      // Start traversing from the directory
-      traverseDirectory(directory);
-      
-      // Add statistics to the end of the file
-      fs.appendFileSync(outputFile, '## Statistics\n\n');
-      fs.appendFileSync(outputFile, `- Total files: ${stats.totalFiles}\n`);
-      fs.appendFileSync(outputFile, `- Included files: ${stats.includedFiles}\n`);
-      fs.appendFileSync(outputFile, `- Excluded files: ${stats.excludedFiles}\n`);
-      fs.appendFileSync(outputFile, `- Total size: ${formatBytes(stats.totalSizeBytes)}\n`);
-      fs.appendFileSync(outputFile, `- Included size: ${formatBytes(stats.includedSizeBytes)}\n\n`);
-      
-      fs.appendFileSync(outputFile, '### File Types\n\n');
-      Object.entries(stats.fileTypes)
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([ext, count]) => {
-          fs.appendFileSync(outputFile, `- ${ext}: ${count}\n`);
-        });
-      
-      resolve({
-        outputFile,
-        stats
-      });
-    } catch (error) {
-      reject(error);
     }
-  });
+    
+    traverseDirectory(directory);
+    spinner.text = `Processing ${totalFiles} files (${formatBytes(totalSize)})...`;
+    
+    // Sort files by path for consistent output
+    filePaths.sort();
+    
+    // Read and combine all files
+    for (const filePath of filePaths) {
+      try {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+        const relativePath = path.relative(directory, filePath);
+        
+        extractedCode += `// ${relativePath}\n// ${'='.repeat(60)}\n${fileContent}\n\n`;
+      } catch (error) {
+        console.error(`Error reading file ${filePath}:`, error.message);
+      }
+    }
+    
+    // Write to output file if specified
+    if (output) {
+      fs.writeFileSync(output, extractedCode);
+      spinner.succeed(`Extracted code from ${totalFiles} files (${formatBytes(totalSize)}) to ${output}`);
+    } else {
+      spinner.succeed(`Extracted code from ${totalFiles} files (${formatBytes(totalSize)})`);
+    }
+    
+    return extractedCode;
+  } catch (error) {
+    handleError(error, 'Error extracting code');
+  }
 }
 
 /**
- * Get repository code (mock function for demo)
+ * Get repository code from stored repository
  */
 async function getRepositoryCode(repositoryId) {
-  // In a real implementation, this would fetch from a server or database
-  return `This is a mock repository code content for repository ID ${repositoryId}.\nIt would typically contain the entire codebase extracted from a repository.`;
+  try {
+    const repoPath = path.join(REPO_DIR, repositoryId);
+    
+    if (!fs.existsSync(repoPath)) {
+      throw new Error(`Repository with ID ${repositoryId} not found`);
+    }
+    
+    return await extractRepositoryCode({ directory: repoPath });
+  } catch (error) {
+    handleError(error, 'Error getting repository code');
+  }
 }
 
 /**
- * View a document (mock function for demo)
+ * View a document
  */
 async function viewDocument(documentId, format = 'terminal') {
-  // In a real implementation, this would fetch from a server or database
-  return `# Sample Document ${documentId}
-
-This is a sample document that would typically contain AI-generated content about a repository.
-
-## Architecture Overview
-
-This section would describe the system architecture.
-
-## Components
-
-- Component 1
-- Component 2
-- Component 3
-
-## Interactions
-
-This section would describe how components interact.`;
+  try {
+    const docPath = path.join(DOCS_DIR, `${documentId}.md`);
+    
+    if (!fs.existsSync(docPath)) {
+      throw new Error(`Document with ID ${documentId} not found`);
+    }
+    
+    const content = fs.readFileSync(docPath, 'utf8');
+    
+    if (format === 'terminal') {
+      console.log(marked(content));
+    } else if (format === 'raw') {
+      console.log(content);
+    } else {
+      throw new Error(`Unsupported format: ${format}`);
+    }
+  } catch (error) {
+    handleError(error, 'Error viewing document');
+  }
 }
 
 /**
@@ -854,7 +255,7 @@ function formatBytes(bytes, decimals = 2) {
   
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
   
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   
@@ -866,5 +267,1088 @@ function formatBytes(bytes, decimals = 2) {
  */
 function formatDate(dateString) {
   const date = new Date(dateString);
-  return date.toLocaleString();
+  return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
 }
+
+/**
+ * Interactive process for working with GitHub repositories
+ */
+async function interactiveGitHub() {
+  displayHeader();
+  
+  try {
+    // Authenticate with GitHub
+    const accessToken = await authenticate();
+    
+    // Select repository
+    const selectedRepo = await selectRepository(accessToken);
+    
+    // Ask for commands to run
+    await executeCommandsOnRepo(selectedRepo, accessToken);
+  } catch (error) {
+    handleError(error, 'Error in GitHub interactive mode');
+  }
+}
+
+/**
+ * Execute commands on a selected repository
+ */
+async function executeCommandsOnRepo(repository, accessToken) {
+  let repoPath;
+  let repoId;
+  
+  // Clone the repository if it's not local
+  if (repository.isLocal) {
+    repoPath = repository.path;
+    repoId = path.basename(repoPath);
+    console.log(chalk.green(`Using local repository at ${repoPath}`));
+  } else {
+    // Create a unique directory name
+    repoId = `${repository.owner}_${repository.name}_${Date.now()}`;
+    repoPath = path.join(REPO_DIR, repoId);
+    
+    // Clone the repository
+    try {
+      const spinner = ora(`Cloning ${repository.fullName}...`).start();
+      await cloneRepository(repository.cloneUrl, repoPath, repository.isPrivate ? accessToken : null);
+      spinner.succeed(`Cloned ${repository.fullName} to ${repoPath}`);
+    } catch (error) {
+      handleError(error, 'Error cloning repository');
+    }
+  }
+  
+  // Show available commands
+  const { command } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'command',
+      message: 'What would you like to do with this repository?',
+      choices: [
+        { name: 'Extract code for analysis', value: 'extract' },
+        { name: 'Generate documentation', value: 'generate-docs' },
+        { name: 'Analyze code complexity', value: 'complexity' },
+        { name: 'Analyze dependencies', value: 'analyze-deps' },
+        { name: 'Search code semantically', value: 'search' },
+        { name: 'Detect tech stack', value: 'detect-stack' },
+        { name: 'Exit', value: 'exit' },
+      ],
+    },
+  ]);
+  
+  if (command === 'exit') {
+    return;
+  }
+  
+  // Execute the selected command
+  switch (command) {
+    case 'extract':
+      await extractCodeInteractive(repoPath);
+      break;
+    case 'generate-docs':
+      await generateDocsInteractive(repoPath);
+      break;
+    case 'complexity':
+      await complexityInteractive(repoPath);
+      break;
+    case 'analyze-deps':
+      await dependenciesInteractive(repoPath);
+      break;
+    case 'search':
+      await searchInteractive(repoPath);
+      break;
+    case 'detect-stack':
+      await detectStackInteractive(repoPath);
+      break;
+  }
+  
+  // Ask if the user wants to perform another action
+  const { another } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'another',
+      message: 'Would you like to perform another action on this repository?',
+      default: true,
+    },
+  ]);
+  
+  if (another) {
+    await executeCommandsOnRepo(repository, accessToken);
+  }
+}
+
+/**
+ * Interactive code extraction
+ */
+async function extractCodeInteractive(repoPath) {
+  const { output, excludeInput, maxSize } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'output',
+      message: 'Output file path (leave empty to print to console):',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'excludeInput',
+      message: 'Patterns to exclude (comma-separated):',
+      default: 'node_modules,.git,dist,build,*.min.js,*.map',
+    },
+    {
+      type: 'input',
+      name: 'maxSize',
+      message: 'Maximum file size in KB (leave empty for no limit):',
+      default: '',
+      validate: (input) => {
+        if (input === '') return true;
+        const num = parseInt(input);
+        return !isNaN(num) && num > 0 ? true : 'Please enter a positive number or leave empty';
+      },
+    },
+  ]);
+  
+  const exclude = excludeInput.split(',').map(p => p.trim());
+  const maxSizeBytes = maxSize ? parseInt(maxSize) * 1024 : null;
+  
+  await extractRepositoryCode({
+    directory: repoPath,
+    output,
+    exclude,
+    maxSize: maxSizeBytes,
+  });
+}
+
+/**
+ * Interactive documentation generation
+ */
+async function generateDocsInteractive(repoPath) {
+  // Get code content
+  const codeContent = await extractRepositoryCode({ directory: repoPath });
+  
+  // Prompt for options
+  const { type, outputFormat, apiKey, prompt, complexity } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'type',
+      message: 'What type of documentation would you like to generate?',
+      choices: [
+        { name: 'Architectural Documentation', value: 'architecture' },
+        { name: 'User Stories', value: 'user-stories' },
+        { name: 'Code Story (Narrative Explanation)', value: 'code-story' },
+        { name: 'Custom Analysis', value: 'custom' },
+      ],
+    },
+    {
+      type: 'list',
+      name: 'outputFormat',
+      message: 'Output format:',
+      choices: ['md', 'html'],
+      default: 'md',
+    },
+    {
+      type: 'input',
+      name: 'apiKey',
+      message: 'OpenAI API key (leave empty to use environment variable):',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'prompt',
+      message: 'Custom prompt for analysis:',
+      default: '',
+      when: (answers) => answers.type === 'custom',
+    },
+    {
+      type: 'list',
+      name: 'complexity',
+      message: 'Complexity level for code story:',
+      choices: ['simple', 'moderate', 'detailed'],
+      default: 'moderate',
+      when: (answers) => answers.type === 'code-story',
+    },
+  ]);
+  
+  // Get OpenAI API key
+  const finalApiKey = await getOpenAIKey(apiKey);
+  
+  // Validate API key
+  const spinner = ora('Validating API key...').start();
+  const isValid = await validateApiKey(finalApiKey);
+  
+  if (!isValid) {
+    spinner.fail('Invalid API key');
+    throw new Error('Invalid OpenAI API key');
+  }
+  
+  spinner.succeed('API key validated');
+  
+  let result;
+  
+  // Generate documentation based on type
+  if (type === 'architecture') {
+    spinner.text = 'Generating architectural documentation...';
+    spinner.start();
+    result = await generateArchitecturalDoc(codeContent, finalApiKey);
+  } else if (type === 'user-stories') {
+    spinner.text = 'Generating user stories...';
+    spinner.start();
+    result = await generateUserStories(codeContent, finalApiKey);
+  } else if (type === 'code-story') {
+    spinner.text = `Generating code story with ${complexity} complexity...`;
+    spinner.start();
+    result = await generateCodeStory(codeContent, complexity, finalApiKey);
+  } else if (type === 'custom' && prompt) {
+    spinner.text = 'Generating custom analysis...';
+    spinner.start();
+    result = await generateCustomAnalysis(codeContent, prompt, finalApiKey);
+  } else {
+    spinner.fail();
+    throw new Error(`Unsupported documentation type: ${type}`);
+  }
+  
+  spinner.succeed('Documentation generated');
+  
+  // Save document
+  const docId = `${type}_${Date.now()}`;
+  const docPath = path.join(DOCS_DIR, `${docId}.md`);
+  fs.writeFileSync(docPath, result);
+  
+  console.log(chalk.green(`\nDocumentation saved to: ${docPath}`));
+  console.log('\nDocumentation Preview:');
+  console.log(marked(result.slice(0, 1000) + '...\n\n[Content truncated]'));
+}
+
+/**
+ * Interactive complexity analysis
+ */
+async function complexityInteractive(repoPath) {
+  const { output, threshold, language, filter, exclude, details } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'output',
+      message: 'Output format:',
+      choices: ['json', 'html', 'csv'],
+      default: 'json',
+    },
+    {
+      type: 'number',
+      name: 'threshold',
+      message: 'Complexity threshold for highlighting:',
+      default: 15,
+      validate: (input) => {
+        const num = parseInt(input);
+        return !isNaN(num) && num > 0 ? true : 'Please enter a positive number';
+      },
+    },
+    {
+      type: 'input',
+      name: 'language',
+      message: 'Filter by programming language (leave empty for all):',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'filter',
+      message: 'Pattern to filter files (glob syntax, leave empty for all):',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'exclude',
+      message: 'Pattern to exclude files (glob syntax, leave empty for none):',
+      default: '',
+    },
+    {
+      type: 'confirm',
+      name: 'details',
+      message: 'Show detailed breakdown by function/method?',
+      default: false,
+    },
+  ]);
+  
+  const result = await analyzeComplexity({
+    directory: repoPath,
+    output,
+    threshold: parseInt(threshold),
+    language: language || undefined,
+    filter: filter || undefined,
+    exclude: exclude || undefined,
+    details,
+  });
+  
+  console.log('\nComplexity Analysis Results:');
+  
+  if (output === 'json') {
+    console.log(result);
+  } else if (output === 'html') {
+    const outputPath = path.join(process.cwd(), 'complexity-report.html');
+    fs.writeFileSync(outputPath, result);
+    console.log(chalk.green(`\nHTML report saved to: ${outputPath}`));
+  } else if (output === 'csv') {
+    const outputPath = path.join(process.cwd(), 'complexity-report.csv');
+    fs.writeFileSync(outputPath, result);
+    console.log(chalk.green(`\nCSV report saved to: ${outputPath}`));
+  }
+}
+
+/**
+ * Interactive dependencies analysis
+ */
+async function dependenciesInteractive(repoPath) {
+  const { output, depth, filter, exclude, highlightCircular, showExternal } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'output',
+      message: 'Output format:',
+      choices: ['dot', 'json', 'html'],
+      default: 'dot',
+    },
+    {
+      type: 'number',
+      name: 'depth',
+      message: 'Maximum depth for dependency analysis:',
+      default: 10,
+      validate: (input) => {
+        const num = parseInt(input);
+        return !isNaN(num) && num > 0 ? true : 'Please enter a positive number';
+      },
+    },
+    {
+      type: 'input',
+      name: 'filter',
+      message: 'Pattern to filter files (glob syntax, leave empty for all):',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'exclude',
+      message: 'Pattern to exclude files (glob syntax, leave empty for none):',
+      default: '',
+    },
+    {
+      type: 'confirm',
+      name: 'highlightCircular',
+      message: 'Highlight circular dependencies?',
+      default: true,
+    },
+    {
+      type: 'confirm',
+      name: 'showExternal',
+      message: 'Include external dependencies?',
+      default: false,
+    },
+  ]);
+  
+  const result = await analyzeDependencies({
+    directory: repoPath,
+    output,
+    depth: parseInt(depth),
+    filter: filter || undefined,
+    exclude: exclude || undefined,
+    highlightCircular,
+    showExternal,
+  });
+  
+  if (output === 'dot') {
+    const outputPath = path.join(process.cwd(), 'dependencies.dot');
+    fs.writeFileSync(outputPath, result);
+    console.log(chalk.green(`\nDOT file saved to: ${outputPath}`));
+    console.log(chalk.yellow('To visualize, use Graphviz: dot -Tpng dependencies.dot -o dependencies.png'));
+  } else if (output === 'json') {
+    console.log(result);
+  } else if (output === 'html') {
+    const outputPath = path.join(process.cwd(), 'dependencies.html');
+    fs.writeFileSync(outputPath, result);
+    console.log(chalk.green(`\nHTML visualization saved to: ${outputPath}`));
+  }
+}
+
+/**
+ * Interactive code search
+ */
+async function searchInteractive(repoPath) {
+  const { query, limit, context, apiKey, useEmbeddings } = await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'query',
+      message: 'Enter your search query:',
+      validate: (input) => input.trim() !== '' ? true : 'Query cannot be empty',
+    },
+    {
+      type: 'number',
+      name: 'limit',
+      message: 'Maximum number of results:',
+      default: 10,
+      validate: (input) => {
+        const num = parseInt(input);
+        return !isNaN(num) && num > 0 ? true : 'Please enter a positive number';
+      },
+    },
+    {
+      type: 'number',
+      name: 'context',
+      message: 'Lines of context to show:',
+      default: 3,
+      validate: (input) => {
+        const num = parseInt(input);
+        return !isNaN(num) && num >= 0 ? true : 'Please enter a non-negative number';
+      },
+    },
+    {
+      type: 'confirm',
+      name: 'useEmbeddings',
+      message: 'Use semantic search with OpenAI embeddings?',
+      default: true,
+    },
+    {
+      type: 'input',
+      name: 'apiKey',
+      message: 'OpenAI API key (leave empty to use environment variable):',
+      default: '',
+      when: (answers) => answers.useEmbeddings,
+    },
+  ]);
+  
+  // Get OpenAI API key if using embeddings
+  let finalApiKey = null;
+  if (useEmbeddings) {
+    finalApiKey = await getOpenAIKey(apiKey);
+  }
+  
+  const results = await searchCodebase({
+    query,
+    directory: repoPath,
+    limit: parseInt(limit),
+    context: parseInt(context),
+    apiKey: finalApiKey,
+    useEmbeddings,
+  });
+  
+  if (results.hits.length === 0) {
+    console.log(chalk.yellow('\nNo results found for your query.'));
+  } else {
+    console.log(chalk.green(`\nFound ${results.hits.length} results for your query:`));
+    
+    for (let i = 0; i < results.hits.length; i++) {
+      const hit = results.hits[i];
+      console.log(`\n${chalk.cyan(`[${i + 1}] ${hit.file} (Lines ${hit.lineStart}-${hit.lineEnd})`)}`);
+      console.log(chalk.gray(`Score: ${hit.score.toFixed(2)}`));
+      console.log('-'.repeat(80));
+      console.log(hit.content);
+      console.log('-'.repeat(80));
+    }
+    
+    console.log(chalk.gray(`\nSearch completed in ${results.timeMs}ms`));
+  }
+}
+
+/**
+ * Interactive tech stack detection
+ */
+async function detectStackInteractive(repoPath) {
+  const { output, scanDeps, checkOutdated } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'output',
+      message: 'Output format:',
+      choices: ['text', 'json', 'md'],
+      default: 'text',
+    },
+    {
+      type: 'confirm',
+      name: 'scanDeps',
+      message: 'Perform deep dependency scanning?',
+      default: true,
+    },
+    {
+      type: 'confirm',
+      name: 'checkOutdated',
+      message: 'Check for outdated dependencies?',
+      default: true,
+    },
+  ]);
+  
+  const spinner = ora('Analyzing tech stack...').start();
+  
+  const result = await detectTechStack({
+    directory: repoPath,
+    scanDeps,
+    checkOutdated,
+  });
+  
+  spinner.succeed('Tech stack analysis complete');
+  
+  if (output === 'json') {
+    console.log(JSON.stringify(result, null, 2));
+  } else if (output === 'md') {
+    let markdown = '# Tech Stack Analysis\n\n';
+    
+    markdown += '## Primary Technologies\n\n';
+    for (const tech of result.primaryTech) {
+      markdown += `- **${tech.name}** (${tech.type})\n`;
+      if (tech.version) markdown += `  - Version: ${tech.version}\n`;
+      if (tech.confidence) markdown += `  - Confidence: ${tech.confidence}%\n`;
+    }
+    
+    if (result.frameworks.length > 0) {
+      markdown += '\n## Frameworks\n\n';
+      for (const framework of result.frameworks) {
+        markdown += `- **${framework.name}**\n`;
+        if (framework.version) markdown += `  - Version: ${framework.version}\n`;
+      }
+    }
+    
+    if (result.libraries.length > 0) {
+      markdown += '\n## Libraries\n\n';
+      for (const lib of result.libraries) {
+        markdown += `- **${lib.name}**\n`;
+        if (lib.version) markdown += `  - Version: ${lib.version}\n`;
+        if (lib.outdated) markdown += `  - **Outdated**: Latest version is ${lib.latestVersion}\n`;
+      }
+    }
+    
+    if (result.buildTools.length > 0) {
+      markdown += '\n## Build Tools\n\n';
+      for (const tool of result.buildTools) {
+        markdown += `- **${tool.name}**\n`;
+        if (tool.version) markdown += `  - Version: ${tool.version}\n`;
+      }
+    }
+    
+    if (result.recommendations.length > 0) {
+      markdown += '\n## Recommendations\n\n';
+      for (const rec of result.recommendations) {
+        markdown += `- ${rec}\n`;
+      }
+    }
+    
+    console.log(markdown);
+    
+    const outputPath = path.join(process.cwd(), 'tech-stack.md');
+    fs.writeFileSync(outputPath, markdown);
+    console.log(chalk.green(`\nMarkdown report saved to: ${outputPath}`));
+  } else {
+    // Text output
+    console.log(chalk.bold.cyan('\n=== Tech Stack Analysis ===\n'));
+    
+    console.log(chalk.bold.underline('Primary Technologies:'));
+    for (const tech of result.primaryTech) {
+      console.log(`- ${chalk.bold(tech.name)} (${tech.type})`);
+      if (tech.version) console.log(`  Version: ${tech.version}`);
+      if (tech.confidence) console.log(`  Confidence: ${tech.confidence}%`);
+    }
+    
+    if (result.frameworks.length > 0) {
+      console.log(chalk.bold.underline('\nFrameworks:'));
+      for (const framework of result.frameworks) {
+        console.log(`- ${chalk.bold(framework.name)}`);
+        if (framework.version) console.log(`  Version: ${framework.version}`);
+      }
+    }
+    
+    if (result.libraries.length > 0) {
+      console.log(chalk.bold.underline('\nLibraries:'));
+      for (const lib of result.libraries) {
+        console.log(`- ${chalk.bold(lib.name)}`);
+        if (lib.version) console.log(`  Version: ${lib.version}`);
+        if (lib.outdated) console.log(`  ${chalk.yellow('Outdated')}: Latest version is ${lib.latestVersion}`);
+      }
+    }
+    
+    if (result.buildTools.length > 0) {
+      console.log(chalk.bold.underline('\nBuild Tools:'));
+      for (const tool of result.buildTools) {
+        console.log(`- ${chalk.bold(tool.name)}`);
+        if (tool.version) console.log(`  Version: ${tool.version}`);
+      }
+    }
+    
+    if (result.recommendations.length > 0) {
+      console.log(chalk.bold.underline('\nRecommendations:'));
+      for (const rec of result.recommendations) {
+        console.log(`- ${rec}`);
+      }
+    }
+  }
+}
+
+// Define CLI program
+program
+  .name('codeinsight')
+  .description('A comprehensive CLI tool for AI researchers')
+  .version('1.0.0');
+
+// Interactive GitHub flow command
+program
+  .command('github')
+  .description('Authenticate with GitHub and analyze repositories')
+  .action(interactiveGitHub);
+
+// GitHub logout command
+program
+  .command('logout')
+  .description('Logout from GitHub')
+  .action(async () => {
+    displayHeader();
+    await logout();
+  });
+
+// Extract code command
+program
+  .command('extract')
+  .description('Extract code from a repository')
+  .option('-d, --directory <path>', 'Repository directory', process.cwd())
+  .option('-o, --output <filename>', 'Output filename')
+  .option('-x, --exclude <patterns>', 'Comma-separated patterns to exclude', '')
+  .option('-s, --size <size>', 'Maximum file size in KB')
+  .action(async (options) => {
+    displayHeader();
+    
+    try {
+      let maxSize = null;
+      if (options.size) {
+        maxSize = parseInt(options.size) * 1024; // Convert KB to bytes
+      }
+      
+      const exclude = options.exclude
+        ? options.exclude.split(',').map(p => p.trim())
+        : [];
+      
+      await extractRepositoryCode({
+        directory: options.directory,
+        output: options.output,
+        exclude,
+        maxSize
+      });
+    } catch (error) {
+      handleError(error, 'Error extracting code');
+    }
+  });
+
+// Generate documentation command
+program
+  .command('generate-docs')
+  .description('Generate documentation from repository code')
+  .argument('[repository-id]', 'Repository ID (optional if source is provided)')
+  .option('-s, --source <filename>', 'Source code file')
+  .option('-t, --type <type>', 'Documentation type (architecture, user-stories, code-story)', 'architecture')
+  .option('-o, --output-format <format>', 'Output format (md, html)', 'md')
+  .option('-k, --api-key <key>', 'OpenAI API key')
+  .option('-p, --prompt <text>', 'Custom prompt for analysis')
+  .option('-c, --complexity <level>', 'Complexity level for code story (simple, moderate, detailed)', 'moderate')
+  .action(async (repositoryId, options) => {
+    displayHeader();
+    
+    try {
+      let codeContent;
+      
+      // Get code content either from source file or repository
+      if (options.source) {
+        codeContent = fs.readFileSync(options.source, 'utf8');
+      } else if (repositoryId) {
+        codeContent = await getRepositoryCode(repositoryId);
+      } else {
+        throw new Error('Either source file or repository ID must be provided');
+      }
+      
+      // Get OpenAI API key
+      const apiKey = await getOpenAIKey(options.apiKey);
+      
+      // Validate API key
+      const spinner = ora('Validating API key...').start();
+      const isValid = await validateApiKey(apiKey);
+      
+      if (!isValid) {
+        spinner.fail('Invalid API key');
+        throw new Error('Invalid OpenAI API key');
+      }
+      
+      spinner.succeed('API key validated');
+      
+      let result;
+      
+      // Generate documentation based on type
+      if (options.type === 'architecture') {
+        spinner.text = 'Generating architectural documentation...';
+        spinner.start();
+        result = await generateArchitecturalDoc(codeContent, apiKey);
+      } else if (options.type === 'user-stories') {
+        spinner.text = 'Generating user stories...';
+        spinner.start();
+        result = await generateUserStories(codeContent, apiKey);
+      } else if (options.type === 'code-story') {
+        spinner.text = `Generating code story with ${options.complexity} complexity...`;
+        spinner.start();
+        result = await generateCodeStory(codeContent, options.complexity, apiKey);
+      } else if (options.type === 'custom' && options.prompt) {
+        spinner.text = 'Generating custom analysis...';
+        spinner.start();
+        result = await generateCustomAnalysis(codeContent, options.prompt, apiKey);
+      } else {
+        spinner.fail();
+        throw new Error(`Unsupported documentation type: ${options.type}`);
+      }
+      
+      spinner.succeed('Documentation generated');
+      
+      // Save document
+      const docId = `${options.type}_${Date.now()}`;
+      const docPath = path.join(DOCS_DIR, `${docId}.md`);
+      fs.writeFileSync(docPath, result);
+      
+      console.log(chalk.green(`\nDocumentation saved to: ${docPath}`));
+      console.log('\nDocumentation Preview:');
+      console.log(marked(result.slice(0, 1000) + '...\n\n[Content truncated]'));
+    } catch (error) {
+      handleError(error, 'Error generating documentation');
+    }
+  });
+
+// Analyze complexity command
+program
+  .command('complexity')
+  .description('Analyze code complexity metrics')
+  .option('-d, --directory <path>', 'Repository directory', process.cwd())
+  .option('-o, --output <format>', 'Output format (json, html, csv)', 'json')
+  .option('-t, --threshold <number>', 'Complexity threshold for highlighting', '15')
+  .option('-l, --language <language>', 'Filter by programming language')
+  .option('-f, --filter <pattern>', 'Pattern to filter files (glob syntax)')
+  .option('-x, --exclude <pattern>', 'Pattern to exclude files (glob syntax)')
+  .option('--details', 'Show detailed breakdown by function/method')
+  .action(async (options) => {
+    displayHeader();
+    
+    try {
+      const result = await analyzeComplexity({
+        directory: options.directory,
+        output: options.output,
+        threshold: parseInt(options.threshold),
+        language: options.language,
+        filter: options.filter,
+        exclude: options.exclude,
+        details: options.details || false
+      });
+      
+      console.log('\nComplexity Analysis Results:');
+      
+      if (options.output === 'json') {
+        console.log(result);
+      } else if (options.output === 'html') {
+        const outputPath = path.join(process.cwd(), 'complexity-report.html');
+        fs.writeFileSync(outputPath, result);
+        console.log(chalk.green(`\nHTML report saved to: ${outputPath}`));
+      } else if (options.output === 'csv') {
+        const outputPath = path.join(process.cwd(), 'complexity-report.csv');
+        fs.writeFileSync(outputPath, result);
+        console.log(chalk.green(`\nCSV report saved to: ${outputPath}`));
+      }
+    } catch (error) {
+      handleError(error, 'Error analyzing complexity');
+    }
+  });
+
+// Analyze dependencies command
+program
+  .command('analyze-deps')
+  .description('Analyze dependencies between files')
+  .option('-d, --directory <path>', 'Repository directory', process.cwd())
+  .option('-o, --output <format>', 'Output format (dot, json, html)', 'dot')
+  .option('--depth <number>', 'Maximum depth for dependency analysis', '10')
+  .option('-f, --filter <pattern>', 'Pattern to filter files (glob syntax)')
+  .option('-x, --exclude <pattern>', 'Pattern to exclude files (glob syntax)')
+  .option('--highlight-circular', 'Highlight circular dependencies')
+  .option('--show-external', 'Include external dependencies')
+  .action(async (options) => {
+    displayHeader();
+    
+    try {
+      const result = await analyzeDependencies({
+        directory: options.directory,
+        output: options.output,
+        depth: parseInt(options.depth),
+        filter: options.filter,
+        exclude: options.exclude,
+        highlightCircular: options.highlightCircular || false,
+        showExternal: options.showExternal || false
+      });
+      
+      if (options.output === 'dot') {
+        const outputPath = path.join(process.cwd(), 'dependencies.dot');
+        fs.writeFileSync(outputPath, result);
+        console.log(chalk.green(`\nDOT file saved to: ${outputPath}`));
+        console.log(chalk.yellow('To visualize, use Graphviz: dot -Tpng dependencies.dot -o dependencies.png'));
+      } else if (options.output === 'json') {
+        console.log(result);
+      } else if (options.output === 'html') {
+        const outputPath = path.join(process.cwd(), 'dependencies.html');
+        fs.writeFileSync(outputPath, result);
+        console.log(chalk.green(`\nHTML visualization saved to: ${outputPath}`));
+      }
+    } catch (error) {
+      handleError(error, 'Error analyzing dependencies');
+    }
+  });
+
+// Search command
+program
+  .command('search')
+  .description('Search code using natural language')
+  .argument('<query>', 'Natural language query')
+  .option('-d, --directory <path>', 'Repository directory', process.cwd())
+  .option('-l, --limit <number>', 'Maximum number of results', '10')
+  .option('-c, --context <lines>', 'Lines of context to show', '3')
+  .option('-k, --api-key <key>', 'OpenAI API key')
+  .option('--no-embeddings', 'Use simple keyword search instead of semantic search')
+  .action(async (query, options) => {
+    displayHeader();
+    
+    try {
+      // Get OpenAI API key if using embeddings
+      let apiKey = null;
+      if (options.embeddings) {
+        apiKey = await getOpenAIKey(options.apiKey);
+      }
+      
+      const results = await searchCodebase({
+        query,
+        directory: options.directory,
+        limit: parseInt(options.limit),
+        context: parseInt(options.context),
+        apiKey,
+        useEmbeddings: options.embeddings
+      });
+      
+      if (results.hits.length === 0) {
+        console.log(chalk.yellow('\nNo results found for your query.'));
+      } else {
+        console.log(chalk.green(`\nFound ${results.hits.length} results for your query:`));
+        
+        for (let i = 0; i < results.hits.length; i++) {
+          const hit = results.hits[i];
+          console.log(`\n${chalk.cyan(`[${i + 1}] ${hit.file} (Lines ${hit.lineStart}-${hit.lineEnd})`)}`);
+          console.log(chalk.gray(`Score: ${hit.score.toFixed(2)}`));
+          console.log('-'.repeat(80));
+          console.log(hit.content);
+          console.log('-'.repeat(80));
+        }
+        
+        console.log(chalk.gray(`\nSearch completed in ${results.timeMs}ms`));
+      }
+    } catch (error) {
+      handleError(error, 'Error searching code');
+    }
+  });
+
+// Tech stack detection command
+program
+  .command('detect-stack')
+  .description('Detect technology stack in repository')
+  .option('-d, --directory <path>', 'Repository directory', process.cwd())
+  .option('-o, --output <format>', 'Output format (json, text, md)', 'text')
+  .option('--scan-deps', 'Perform deep dependency scanning')
+  .option('--check-outdated', 'Check for outdated dependencies')
+  .action(async (options) => {
+    displayHeader();
+    
+    try {
+      const spinner = ora('Analyzing tech stack...').start();
+      
+      const result = await detectTechStack({
+        directory: options.directory,
+        scanDeps: options.scanDeps || false,
+        checkOutdated: options.checkOutdated || false
+      });
+      
+      spinner.succeed('Tech stack analysis complete');
+      
+      if (options.output === 'json') {
+        console.log(JSON.stringify(result, null, 2));
+      } else if (options.output === 'md') {
+        let markdown = '# Tech Stack Analysis\n\n';
+        
+        markdown += '## Primary Technologies\n\n';
+        for (const tech of result.primaryTech) {
+          markdown += `- **${tech.name}** (${tech.type})\n`;
+          if (tech.version) markdown += `  - Version: ${tech.version}\n`;
+          if (tech.confidence) markdown += `  - Confidence: ${tech.confidence}%\n`;
+        }
+        
+        if (result.frameworks.length > 0) {
+          markdown += '\n## Frameworks\n\n';
+          for (const framework of result.frameworks) {
+            markdown += `- **${framework.name}**\n`;
+            if (framework.version) markdown += `  - Version: ${framework.version}\n`;
+          }
+        }
+        
+        if (result.libraries.length > 0) {
+          markdown += '\n## Libraries\n\n';
+          for (const lib of result.libraries) {
+            markdown += `- **${lib.name}**\n`;
+            if (lib.version) markdown += `  - Version: ${lib.version}\n`;
+            if (lib.outdated) markdown += `  - **Outdated**: Latest version is ${lib.latestVersion}\n`;
+          }
+        }
+        
+        if (result.buildTools.length > 0) {
+          markdown += '\n## Build Tools\n\n';
+          for (const tool of result.buildTools) {
+            markdown += `- **${tool.name}**\n`;
+            if (tool.version) markdown += `  - Version: ${tool.version}\n`;
+          }
+        }
+        
+        if (result.recommendations.length > 0) {
+          markdown += '\n## Recommendations\n\n';
+          for (const rec of result.recommendations) {
+            markdown += `- ${rec}\n`;
+          }
+        }
+        
+        console.log(markdown);
+        
+        const outputPath = path.join(process.cwd(), 'tech-stack.md');
+        fs.writeFileSync(outputPath, markdown);
+        console.log(chalk.green(`\nMarkdown report saved to: ${outputPath}`));
+      } else {
+        // Text output
+        console.log(chalk.bold.cyan('\n=== Tech Stack Analysis ===\n'));
+        
+        console.log(chalk.bold.underline('Primary Technologies:'));
+        for (const tech of result.primaryTech) {
+          console.log(`- ${chalk.bold(tech.name)} (${tech.type})`);
+          if (tech.version) console.log(`  Version: ${tech.version}`);
+          if (tech.confidence) console.log(`  Confidence: ${tech.confidence}%`);
+        }
+        
+        if (result.frameworks.length > 0) {
+          console.log(chalk.bold.underline('\nFrameworks:'));
+          for (const framework of result.frameworks) {
+            console.log(`- ${chalk.bold(framework.name)}`);
+            if (framework.version) console.log(`  Version: ${framework.version}`);
+          }
+        }
+        
+        if (result.libraries.length > 0) {
+          console.log(chalk.bold.underline('\nLibraries:'));
+          for (const lib of result.libraries) {
+            console.log(`- ${chalk.bold(lib.name)}`);
+            if (lib.version) console.log(`  Version: ${lib.version}`);
+            if (lib.outdated) console.log(`  ${chalk.yellow('Outdated')}: Latest version is ${lib.latestVersion}`);
+          }
+        }
+        
+        if (result.buildTools.length > 0) {
+          console.log(chalk.bold.underline('\nBuild Tools:'));
+          for (const tool of result.buildTools) {
+            console.log(`- ${chalk.bold(tool.name)}`);
+            if (tool.version) console.log(`  Version: ${tool.version}`);
+          }
+        }
+        
+        if (result.recommendations.length > 0) {
+          console.log(chalk.bold.underline('\nRecommendations:'));
+          for (const rec of result.recommendations) {
+            console.log(`- ${rec}`);
+          }
+        }
+      }
+    } catch (error) {
+      handleError(error, 'Error detecting tech stack');
+    }
+  });
+
+// Command to list repositories
+program
+  .command('list-repos')
+  .description('List repositories')
+  .action(() => {
+    displayHeader();
+    
+    try {
+      const files = fs.readdirSync(REPO_DIR);
+      
+      if (files.length === 0) {
+        console.log(chalk.yellow('No repositories found.'));
+        return;
+      }
+      
+      console.log(chalk.bold.cyan('\n=== Repositories ===\n'));
+      
+      for (const file of files) {
+        const repoPath = path.join(REPO_DIR, file);
+        const stats = fs.statSync(repoPath);
+        
+        if (stats.isDirectory()) {
+          console.log(`- ${chalk.bold(file)}`);
+          console.log(`  Added: ${formatDate(stats.birthtime)}`);
+          console.log(`  Path: ${repoPath}`);
+        }
+      }
+    } catch (error) {
+      handleError(error, 'Error listing repositories');
+    }
+  });
+
+// Command to list documents
+program
+  .command('list-docs')
+  .description('List generated documents')
+  .action(() => {
+    displayHeader();
+    
+    try {
+      const files = fs.readdirSync(DOCS_DIR);
+      
+      if (files.length === 0) {
+        console.log(chalk.yellow('No documents found.'));
+        return;
+      }
+      
+      console.log(chalk.bold.cyan('\n=== Documents ===\n'));
+      
+      for (const file of files) {
+        if (path.extname(file) === '.md') {
+          const docPath = path.join(DOCS_DIR, file);
+          const stats = fs.statSync(docPath);
+          const docId = path.basename(file, '.md');
+          
+          const parts = docId.split('_');
+          const type = parts[0];
+          const timestamp = parts.slice(1).join('_');
+          
+          console.log(`- ${chalk.bold(docId)}`);
+          console.log(`  Type: ${type}`);
+          console.log(`  Created: ${formatDate(stats.birthtime)}`);
+          console.log(`  Size: ${formatBytes(stats.size)}`);
+          console.log(`  Path: ${docPath}`);
+        }
+      }
+    } catch (error) {
+      handleError(error, 'Error listing documents');
+    }
+  });
+
+// Command to view a document
+program
+  .command('view-doc')
+  .description('View a document')
+  .argument('<document-id>', 'Document ID')
+  .option('-f, --format <format>', 'Output format (terminal, raw)', 'terminal')
+  .action(async (documentId, options) => {
+    displayHeader();
+    
+    try {
+      await viewDocument(documentId, options.format);
+    } catch (error) {
+      handleError(error, 'Error viewing document');
+    }
+  });
+
+// Default action if no command is specified
+program.action(() => {
+  displayHeader();
+  program.help();
+});
+
+// Parse command line arguments
+program.parse(process.argv);
