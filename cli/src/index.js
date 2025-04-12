@@ -30,6 +30,11 @@ const { displayHeader, displayInlineHeader, handleError } = require('./utils/dis
 
 // Import commands
 const {
+  // Authentication commands
+  login,
+  logout,
+  
+  // Repository and document commands
   getRepositoryCode,
   viewDocument,
   interactiveGitHub,
@@ -305,6 +310,22 @@ program
     }
   });
 
+// GitHub login
+program
+  .command('login')
+  .description('Login to GitHub')
+  .option('--force', 'Force re-authentication even if token exists', false)
+  .option('--web-redirect', 'Use web redirect instead of local server', false)
+  .option('--use-custom-app', 'Use custom GitHub app credentials from environment variables', false)
+  .action(async (options) => {
+    try {
+      displayInlineHeader();
+      await login(options);
+    } catch (error) {
+      handleError(error, 'Error logging in');
+    }
+  });
+
 // GitHub logout
 program
   .command('logout')
@@ -312,11 +333,7 @@ program
   .action(async () => {
     try {
       displayInlineHeader();
-      
-      const { logout } = require('./api/github-auth');
       await logout();
-      
-      console.log('Successfully logged out from GitHub.');
     } catch (error) {
       handleError(error, 'Error logging out');
     }
@@ -328,6 +345,9 @@ Run without arguments for interactive mode.
 
 Examples:
   $ ${CLI_NAME}                              # Run in interactive mode
+  $ ${CLI_NAME} login                        # Login to GitHub with default settings
+  $ ${CLI_NAME} login --web-redirect         # Login to GitHub using web redirect
+  $ ${CLI_NAME} login --use-custom-app       # Login using custom GitHub OAuth app
   $ ${CLI_NAME} extract ./my-project         # Extract code from a repository
   $ ${CLI_NAME} generate-docs repo_id        # Generate documentation
   $ ${CLI_NAME} complexity ./my-project      # Analyze code complexity

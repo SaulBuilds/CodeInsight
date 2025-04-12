@@ -702,7 +702,72 @@ async function detectStackInteractive(repoPath) {
   }
 }
 
+/**
+ * Login to GitHub
+ * @param {Object} options - Command options
+ * @param {boolean} options.force - Force re-authentication even if token exists
+ * @param {boolean} options.webRedirect - Use web redirect instead of local server
+ * @param {boolean} options.useCustomApp - Use custom GitHub app credentials
+ */
+async function loginCommand(options = {}) {
+  const { force = false, webRedirect = false, useCustomApp = false } = options;
+  
+  try {
+    displayHeader('GitHub Authentication');
+    
+    if (useCustomApp) {
+      console.log(chalk.yellow('Using custom GitHub OAuth credentials from environment variables.'));
+      console.log(chalk.yellow('Make sure GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET are set.'));
+    } else {
+      console.log(chalk.green('Using VibeInsights default GitHub OAuth application.'));
+    }
+    
+    if (webRedirect) {
+      const redirectUri = process.env.NODE_ENV === 'development' 
+        ? 'https://54a5e666-dc40-4c6d-863f-d863a4bc27ae-00-1peum3pg6g6r3.kirk.replit.dev/callback'
+        : 'https://vibeinsights.xyz/callback';
+      
+      console.log(chalk.cyan(`Using web redirect flow to ${redirectUri}`));
+      console.log(chalk.cyan('You will need to manually copy the authorization code.'));
+    } else {
+      console.log(chalk.cyan('Using local server flow (http://localhost:3000/callback)'));
+    }
+    
+    // Authenticate with GitHub
+    const token = await authenticate({
+      forceAuth: force,
+      useWebRedirect: webRedirect,
+      useCustomApp: useCustomApp
+    });
+    
+    console.log(chalk.green('\n✓ Successfully authenticated with GitHub!'));
+    
+    return token;
+  } catch (error) {
+    handleError('Authentication failed', error);
+    process.exit(1);
+  }
+}
+
+/**
+ * Logout from GitHub
+ */
+async function logoutCommand() {
+  try {
+    displayHeader('GitHub Logout');
+    await logout();
+  } catch (error) {
+    handleError('Logout failed', error);
+    process.exit(1);
+  }
+}
+
 module.exports = {
+  // Authentication commands
+  login: loginCommand,
+  logout: logoutCommand,
+  
+  // Repository and document commands
   getRepositoryCode,
   viewDocument,
   interactiveGitHub,
