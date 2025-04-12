@@ -4,7 +4,7 @@ export default function QuickStartPage() {
   return (
     <DocLayout
       title="Quick Start Guide"
-      description="Learn how to use CodeInsight AI to analyze repositories and generate documentation"
+      description="Learn how to use VibeInsights AI to analyze repositories and generate documentation"
     >
       <div className="prose dark:prose-invert max-w-none">
         <h2 id="introduction">Introduction</h2>
@@ -15,7 +15,7 @@ export default function QuickStartPage() {
         <div className="mt-8">
           <h2 id="basic-commands">Basic Commands</h2>
           <p>
-            CodeInsight AI provides several commands for different analysis tasks. Here are the most common commands you'll use:
+            VibeInsights AI provides several commands for different analysis tasks. Here are the most common commands you'll use:
           </p>
 
           <div className="mt-6 space-y-6">
