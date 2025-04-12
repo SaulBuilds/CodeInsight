@@ -66,7 +66,8 @@ export default function Sidebar({ isVisible, onClose }: SidebarProps) {
           href: 'https://github.com/saulbuilds/vibeinsights',
           external: true 
         },
-        { title: 'Report an Issue', href: '/docs/report-issue' }
+        { title: 'Report an Issue', href: '/docs/report-issue' },
+        { title: 'CLI Reference', href: '/cli-reference' }
       ] as NavItem[]
     }
   ];
