@@ -9,7 +9,7 @@ export default function QuickStartPage() {
       <div className="prose dark:prose-invert max-w-none">
         <h2 id="introduction">Introduction</h2>
         <p>
-          This quick start guide will help you get up and running with CodeInsight AI. We'll cover the basic workflow for analyzing repositories, extracting code, and generating documentation.
+          This quick start guide will help you get up and running with VibeInsights AI. We'll cover the basic workflow for analyzing repositories, extracting code, and generating documentation.
         </p>
 
         <div className="mt-8">
@@ -22,7 +22,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">GitHub Integration</h3>
               <p className="mb-2">Connect to GitHub and analyze repositories:</p>
-              <pre><code>codeinsight github</code></pre>
+              <pre><code>vibeinsights github</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 This interactive command will authenticate with GitHub, let you select a repository, and guide you through the analysis options.
               </p>
@@ -31,7 +31,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Extract Code</h3>
               <p className="mb-2">Extract and analyze code from a local repository:</p>
-              <pre><code>codeinsight extract --directory ./path/to/repo --output extracted-code.txt</code></pre>
+              <pre><code>vibeinsights extract --directory ./path/to/repo --output extracted-code.txt</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 This extracts all code files from the specified directory, excluding binary files and common excluded directories like node_modules.
               </p>
@@ -40,7 +40,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Generate Documentation</h3>
               <p className="mb-2">Generate comprehensive documentation from code:</p>
-              <pre><code>codeinsight generate-docs --source extracted-code.txt --type architecture</code></pre>
+              <pre><code>vibeinsights generate-docs --source extracted-code.txt --type architecture</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Uses OpenAI to analyze the code and generate various types of documentation.
               </p>
@@ -49,7 +49,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Analyze Dependencies</h3>
               <p className="mb-2">Map dependencies between files:</p>
-              <pre><code>codeinsight analyze-deps --directory ./path/to/repo --output dot</code></pre>
+              <pre><code>vibeinsights analyze-deps --directory ./path/to/repo --output dot</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Analyzes imports and exports to create a visualization of file dependencies.
               </p>
@@ -58,7 +58,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Analyze Complexity</h3>
               <p className="mb-2">Calculate code complexity metrics:</p>
-              <pre><code>codeinsight complexity --directory ./path/to/repo --output html</code></pre>
+              <pre><code>vibeinsights complexity --directory ./path/to/repo --output html</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Measures cyclomatic complexity and other metrics to identify potential issues.
               </p>
@@ -67,7 +67,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Semantic Search</h3>
               <p className="mb-2">Search codebase using natural language:</p>
-              <pre><code>codeinsight search "how does user authentication work" --directory ./path/to/repo</code></pre>
+              <pre><code>vibeinsights search "how does user authentication work" --directory ./path/to/repo</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Uses OpenAI embeddings to find code that semantically matches your query.
               </p>
