@@ -112,6 +112,24 @@ export default function Documentation() {
                   "Usage examples"
                 ]}
               />
+              
+              <CommandCard
+                title="Generate Code Story"
+                icon="book-open"
+                command="codeinsight generate-docs --type code_story --complexity detailed --source code.txt"
+                description="Create a narrative explanation of complex code structures, making them easier to understand through storytelling."
+                options={[
+                  { name: "--type", description: "Set to 'code_story' for this feature" },
+                  { name: "--complexity", description: "simple, moderate, or detailed" },
+                  { name: "--source, -s", description: "Source code file" }
+                ]}
+                generatedContent={[
+                  "Narrative explanations of code",
+                  "Analogies and metaphors",
+                  "Design reasoning and context",
+                  "Educational storytelling"
+                ]}
+              />
             </section>
 
             {/* Features */}
@@ -128,7 +146,7 @@ export default function Documentation() {
                 <FeatureCard
                   icon="robot"
                   title="OpenAI Integration"
-                  description="Leverage OpenAI's powerful language models to generate detailed documentation, user stories, and architectural overviews."
+                  description="Leverage OpenAI's powerful language models to generate detailed documentation, user stories, code stories, and architectural overviews."
                 />
                 
                 <FeatureCard

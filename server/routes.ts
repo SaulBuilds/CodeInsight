@@ -85,7 +85,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const schema = z.object({
         repository_id: z.number(),
         code_content: z.string(),
-        type: z.enum(["architecture", "user_stories", "custom"]),
+        type: z.enum(["architecture", "user_stories", "code_story", "custom"]),
+        complexity: z.enum(["simple", "moderate", "detailed"]).optional(),
         custom_prompt: z.string().optional(),
         api_key: z.string().optional(),
       });
@@ -112,6 +113,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case "user_stories":
           content = await openai.generateUserStories(validatedData.code_content);
           break;
+        case "code_story":
+          const complexity = validatedData.complexity || 'moderate';
+          content = await openai.generateCodeStory(validatedData.code_content, complexity as 'simple' | 'moderate' | 'detailed');
+          break;
         case "custom":
           if (!validatedData.custom_prompt) {
             return res.status(400).json({ error: "Custom prompt is required for custom analysis" });
@@ -124,13 +129,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Save analysis to storage
       const now = new Date().toISOString();
+      let metadata: Record<string, any> | undefined = undefined;
+      
+      // Add metadata based on type
+      if (validatedData.type === "custom" && validatedData.custom_prompt) {
+        metadata = { prompt: validatedData.custom_prompt };
+      } else if (validatedData.type === "code_story" && validatedData.complexity) {
+        metadata = { complexity: validatedData.complexity };
+      }
+      
       const analysis = await storage.createAnalysis({
         repository_id: validatedData.repository_id,
         type: validatedData.type,
         content: content,
         ai_model: "gpt-4o",
         created_at: now,
-        metadata: validatedData.custom_prompt ? { prompt: validatedData.custom_prompt } : undefined,
+        metadata: metadata,
       });
       
       res.status(200).json({

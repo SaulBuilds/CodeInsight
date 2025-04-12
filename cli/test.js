@@ -14,10 +14,10 @@ const boxen = require('boxen');
 const { VERSION, VERSION_INFO } = require('./version');
 
 console.log(boxen(
-  chalk.blue.bold('RepoScraper CLI Test Script\n\n') +
+  chalk.blue.bold('CodeInsight AI Test Script\n\n') +
   chalk.white(`Version: ${VERSION}\n`) +
   chalk.white(`Release Date: ${VERSION_INFO.releaseDate}\n\n`) +
-  chalk.dim('This script demonstrates how to use the RepoScraper CLI programmatically.'),
+  chalk.dim('This script demonstrates how to use the CodeInsight AI CLI programmatically.'),
   { padding: 1, borderColor: 'blue', dimBorder: true }
 ));
 
