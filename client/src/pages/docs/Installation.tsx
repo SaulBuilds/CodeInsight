@@ -43,26 +43,26 @@ export default function InstallationPage() {
           </p>
           <pre><code>npx vibeinsights-ai [command] [options]</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
-            This will download and execute the latest version of CodeInsight AI for the current session only.
+            This will download and execute the latest version of VibeInsights AI for the current session only.
           </p>
         </div>
 
         <div className="mt-8">
           <h2 id="verify-installation">Verifying Installation</h2>
           <p>
-            To verify that CodeInsight AI has been installed correctly, run the following command:
+            To verify that VibeInsights AI has been installed correctly, run the following command:
           </p>
-          <pre><code>codeinsight --version</code></pre>
+          <pre><code>vibeinsights --version</code></pre>
           <p>
-            This should display the current version of CodeInsight AI. You can also check the available commands by running:
+            This should display the current version of VibeInsights AI. You can also check the available commands by running:
           </p>
-          <pre><code>codeinsight --help</code></pre>
+          <pre><code>vibeinsights --help</code></pre>
         </div>
 
         <div className="mt-8 p-6 bg-primary/5 rounded-lg">
           <h2 id="api-keys" className="mt-0">Setting Up API Keys</h2>
           <p>
-            CodeInsight AI integrates with OpenAI's API for generating documentation and performing semantic search. You'll need to provide your OpenAI API key to use these features.
+            VibeInsights AI integrates with OpenAI's API for generating documentation and performing semantic search. You'll need to provide your OpenAI API key to use these features.
           </p>
           <h3>Option 1: Environment Variables</h3>
           <p>
@@ -81,11 +81,11 @@ $env:OPENAI_API_KEY="your-api-key"</code></pre>
           <p>
             Provide the API key directly with the <code>--api-key</code> option when running commands that require it:
           </p>
-          <pre><code>codeinsight generate-docs --api-key="your-api-key" ...</code></pre>
+          <pre><code>vibeinsights generate-docs --api-key="your-api-key" ...</code></pre>
 
           <h3>Option 3: Interactive Prompt</h3>
           <p>
-            If you don't provide an API key, CodeInsight AI will prompt you to enter it when needed.
+            If you don't provide an API key, VibeInsights AI will prompt you to enter it when needed.
           </p>
         </div>
 
@@ -106,7 +106,7 @@ $env:OPENAI_API_KEY="your-api-key"</code></pre>
           <p className="mb-2">If you encounter any issues during installation:</p>
           <ul className="mt-0">
             <li>Make sure your Node.js version is 14.0.0 or higher (<code>node --version</code>)</li>
-            <li>Try installing with the <code>--force</code> flag: <code>npm install -g codeinsight-ai --force</code></li>
+            <li>Try installing with the <code>--force</code> flag: <code>npm install -g vibeinsights-ai --force</code></li>
             <li>If you get permission errors, you might need to use <code>sudo</code> on Unix-based systems or run your terminal as Administrator on Windows</li>
             <li>Clear npm cache with <code>npm cache clean --force</code> and try installing again</li>
           </ul>
@@ -115,7 +115,7 @@ $env:OPENAI_API_KEY="your-api-key"</code></pre>
         <div className="mt-8">
           <h2 id="next-steps">Next Steps</h2>
           <p>
-            Now that you have CodeInsight AI installed, head over to the <a href="/docs/quick-start">Quick Start Guide</a> to learn how to use the tool and explore its features.
+            Now that you have VibeInsights AI installed, head over to the <a href="/docs/quick-start">Quick Start Guide</a> to learn how to use the tool and explore its features.
           </p>
         </div>
       </div>
