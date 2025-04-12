@@ -1,4 +1,4 @@
-# RepoScraper CLI
+# CodeInsight AI
 
 A comprehensive CLI tool for AI researchers that analyzes repositories, generates documentation, and integrates with OpenAI API.
 
@@ -15,13 +15,13 @@ A comprehensive CLI tool for AI researchers that analyzes repositories, generate
 ### Global Installation
 
 ```bash
-npm install -g repo-scraper-cli
+npm install -g codeinsight-ai
 ```
 
 ### Local Installation
 
 ```bash
-npm install repo-scraper-cli
+npm install codeinsight-ai
 ```
 
 ## Usage
@@ -31,7 +31,7 @@ npm install repo-scraper-cli
 Extract and analyze code from a repository:
 
 ```bash
-repo-scraper analyze [directory] --output analysis.md --exclude dist,build
+codeinsight analyze [directory] --output analysis.md --exclude dist,build
 ```
 
 Options:
@@ -45,7 +45,7 @@ Options:
 Generate documentation from repository code using OpenAI:
 
 ```bash
-repo-scraper generate-docs <repository_id> --type architecture
+codeinsight generate-docs <repository_id> --type architecture
 ```
 
 Options:
@@ -58,7 +58,7 @@ Options:
 List all analyzed repositories:
 
 ```bash
-repo-scraper list-repos
+codeinsight list-repos
 ```
 
 ### List Documentation
@@ -66,7 +66,7 @@ repo-scraper list-repos
 List all documentation generated for a repository:
 
 ```bash
-repo-scraper list-docs <repository_id>
+codeinsight list-docs <repository_id>
 ```
 
 ### View Document
@@ -74,7 +74,7 @@ repo-scraper list-docs <repository_id>
 View a specific document in the terminal or save as markdown:
 
 ```bash
-repo-scraper view-doc <document_id> --format terminal
+codeinsight view-doc <document_id> --format terminal
 ```
 
 Options:

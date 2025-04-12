@@ -1,22 +1,22 @@
 {
-  "name": "repo-scraper-cli",
+  "name": "codeinsight-ai",
   "version": "1.0.0",
   "description": "A comprehensive CLI tool for AI researchers that analyzes repositories, generates documentation, and integrates with OpenAI API",
   "main": "index.js",
   "bin": {
-    "repo-scraper": "./index.js"
+    "codeinsight": "./index.js"
   },
   "keywords": [
     "cli",
-    "repository",
-    "scrape",
-    "code",
+    "codeinsight",
+    "code-analysis",
+    "ai",
     "openai",
     "documentation",
-    "ai",
-    "analysis"
+    "analysis",
+    "repository"
   ],
-  "author": "RepoScraper Team",
+  "author": "CodeInsight AI Team",
   "license": "MIT",
   "dependencies": {
     "chalk": "^4.1.2",

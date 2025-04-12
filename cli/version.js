@@ -1,5 +1,5 @@
 /**
- * Repository Scraper CLI - Version information
+ * CodeInsight AI - Version information
  */
 
 // Version using semantic versioning (major.minor.patch)
@@ -12,9 +12,9 @@ const RELEASE_DATE = '2025-04-12';
 const VERSION_INFO = {
   version: VERSION,
   releaseDate: RELEASE_DATE,
-  name: 'RepoScraper CLI',
+  name: 'CodeInsight AI',
   description: 'A comprehensive CLI tool for AI researchers that analyzes repositories, generates documentation, and integrates with OpenAI API',
-  author: 'RepoScraper Team',
+  author: 'CodeInsight AI Team',
   license: 'MIT',
   engines: {
     node: '>=14.0.0'
