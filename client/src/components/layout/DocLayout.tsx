@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import DocSidebar from "@/components/layout/DocSidebar";
+import Sidebar from "@/components/layout/Sidebar";
 
 interface DocLayoutProps {
   children: ReactNode;
@@ -42,7 +42,7 @@ export default function DocLayout({ children, title, description }: DocLayoutPro
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
         <div className="flex flex-col md:flex-row">
           {/* Sidebar */}
-          <DocSidebar 
+          <Sidebar 
             isVisible={showMobileSidebar} 
             onClose={() => setShowMobileSidebar(false)} 
           />

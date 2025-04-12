@@ -33,7 +33,7 @@ function Router() {
       <main className="flex-1">
         <Switch>
           <Route path="/" component={Home} />
-          <Route path="/docs" component={Documentation} />
+          <Route path="/docs/:rest*" component={Documentation} />
           <Route path="/cli-reference" component={CliReference} />
           <Route component={NotFound} />
         </Switch>
