@@ -23,8 +23,10 @@ const CLI_VERSION = '1.0.0';
 const OPENAI_MODEL = 'gpt-4o'; // Latest model as of May 2024
 
 // GitHub OAuth Constants
-const DEFAULT_GITHUB_CLIENT_ID = 'your-default-client-id'; // Replace with your actual client ID
-const DEFAULT_GITHUB_CLIENT_SECRET = 'your-default-client-secret'; // Replace with your actual client secret
+// Use environment variables for default OAuth credentials
+// Set VIBE_DEFAULT_GITHUB_CLIENT_ID and VIBE_DEFAULT_GITHUB_CLIENT_SECRET in production
+const DEFAULT_GITHUB_CLIENT_ID = process.env.VIBE_DEFAULT_GITHUB_CLIENT_ID || ''; 
+const DEFAULT_GITHUB_CLIENT_SECRET = process.env.VIBE_DEFAULT_GITHUB_CLIENT_SECRET || '';
 const REDIRECT_URI_PROD = 'https://vibeinsights.xyz/callback';
 const REDIRECT_URI_DEV = 'https://54a5e666-dc40-4c6d-863f-d863a4bc27ae-00-1peum3pg6g6r3.kirk.replit.dev/callback';
 

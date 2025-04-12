@@ -4,7 +4,19 @@ This guide explains how VibeInsights AI uses GitHub OAuth for authentication and
 
 ## Default Authentication
 
-VibeInsights AI comes with pre-configured GitHub OAuth credentials that allow you to authenticate without creating your own GitHub OAuth application. When you run commands that require GitHub access (like `vibe list-repos` or `vibe analyze`), the tool will automatically use these credentials.
+VibeInsights AI can use pre-configured GitHub OAuth credentials from environment variables that allow you to authenticate without creating your own GitHub OAuth application. When you run commands that require GitHub access (like `vibe list-repos` or `vibe analyze`), the tool will attempt to use these credentials.
+
+### Setting up Default Credentials
+
+To use the default authentication method, the following environment variables must be set:
+
+```bash
+# For developers of VibeInsights:
+export VIBE_DEFAULT_GITHUB_CLIENT_ID="your_default_client_id"
+export VIBE_DEFAULT_GITHUB_CLIENT_SECRET="your_default_client_secret"
+```
+
+These credentials will be used by default when users run the CLI without specifying custom credentials.
 
 ## Authentication Flow Options
 

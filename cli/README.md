@@ -209,6 +209,18 @@ Options:
 ### GitHub Authentication
 
 ```bash
+# Login to GitHub with default settings
+vibe login
+
+# Login using web redirect flow
+vibe login --web-redirect
+
+# Login using custom GitHub app credentials 
+vibe login --use-custom-app
+
+# Force re-authentication (ignore existing token)
+vibe login --force
+
 # Logout of GitHub
 vibe logout
 ```
@@ -260,9 +272,16 @@ This command generates a report that includes:
 
 ## Environment Variables
 
-- `OPENAI_API_KEY`: Your OpenAI API key
-- `GITHUB_CLIENT_ID`: Your GitHub OAuth app client ID
-- `GITHUB_CLIENT_SECRET`: Your GitHub OAuth app client secret
+### OpenAI Integration
+- `OPENAI_API_KEY`: Your OpenAI API key for generating documentation
+
+### GitHub OAuth - For End Users
+- `GITHUB_CLIENT_ID`: Your GitHub OAuth app client ID (when using --use-custom-app)
+- `GITHUB_CLIENT_SECRET`: Your GitHub OAuth app client secret (when using --use-custom-app)
+
+### GitHub OAuth - For VibeInsights Developers
+- `VIBE_DEFAULT_GITHUB_CLIENT_ID`: Default client ID for built-in authentication flow
+- `VIBE_DEFAULT_GITHUB_CLIENT_SECRET`: Default client secret for built-in authentication flow
 
 ## Configuration
 

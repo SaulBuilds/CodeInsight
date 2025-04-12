@@ -320,7 +320,11 @@ program
   .action(async (options) => {
     try {
       displayInlineHeader();
-      await login(options);
+      
+      const { authenticate } = require('./api/github-auth');
+      await authenticate(options);
+      
+      console.log(chalk.green('Successfully logged in to GitHub!'));
     } catch (error) {
       handleError(error, 'Error logging in');
     }
@@ -333,6 +337,8 @@ program
   .action(async () => {
     try {
       displayInlineHeader();
+      
+      const { logout } = require('./api/github-auth');
       await logout();
     } catch (error) {
       handleError(error, 'Error logging out');

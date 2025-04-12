@@ -211,9 +211,11 @@ async function authenticate(options = {}) {
   }
   
   // For non-custom app, validate the default credentials
-  if (!useCustomApp && (GITHUB_CLIENT_ID === 'your-default-client-id' || GITHUB_CLIENT_SECRET === 'your-default-client-secret')) {
+  if (!useCustomApp && (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET)) {
     throw new Error(
-      'Default GitHub OAuth credentials are not configured in the CLI. Please set actual values in the constants.js file.'
+      'Default GitHub OAuth credentials are not available. Please either:\n' +
+      '1. Set VIBE_DEFAULT_GITHUB_CLIENT_ID and VIBE_DEFAULT_GITHUB_CLIENT_SECRET environment variables, or\n' +
+      '2. Use your own GitHub OAuth app with the --use-custom-app flag and GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET variables'
     );
   }
   
