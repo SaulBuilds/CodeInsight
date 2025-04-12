@@ -57,7 +57,7 @@ export default function Home() {
               style={{ transform: calculateTransform(0.5) }}
             >
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-                CodeInsight <span className="text-primary">AI</span>
+                VibeInsights <span className="text-primary">AI</span>
               </h1>
               <p className="mt-6 text-xl md:text-2xl max-w-3xl mx-auto text-foreground/80 leading-relaxed">
                 A sophisticated AI-powered CLI tool that transforms repository analysis 
@@ -183,14 +183,14 @@ export default function Home() {
               <span className="text-foreground/70 text-sm font-medium">Terminal</span>
             </div>
             <div className="p-6 font-mono text-lg text-foreground overflow-x-auto">
-              <span className="text-secondary">$</span> npm install -g codeinsight-ai
+              <span className="text-secondary">$</span> npm install -g vibeinsights-ai
             </div>
           </div>
           
           <p className="mt-6 text-center text-foreground/80">
             After installation, you can use the{" "}
             <code className="font-mono px-2 py-1 rounded bg-muted text-primary">
-              codeinsight
+              vibeinsights
             </code>{" "}
             command globally in your terminal.
           </p>
@@ -218,7 +218,7 @@ export default function Home() {
               Perfect for AI Researchers and Developers
             </h2>
             <p className="text-xl text-foreground/80 mb-12 max-w-3xl mx-auto">
-              CodeInsight AI streamlines the process of code analysis and documentation,
+              VibeInsights AI streamlines the process of code analysis and documentation,
               allowing researchers to focus on insights rather than data collection.
             </p>
             <Link href="/docs">
@@ -226,7 +226,7 @@ export default function Home() {
                 size="lg"
                 className="bg-primary hover:bg-primary/90 text-white py-6 px-10 rounded-xl shadow-lg shadow-primary/20 transition-all hover:shadow-xl hover:shadow-primary/30"
               >
-                Start Using CodeInsight AI
+                Start Using VibeInsights AI
               </Button>
             </Link>
           </div>
