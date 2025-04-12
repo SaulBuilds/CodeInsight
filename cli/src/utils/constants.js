@@ -22,6 +22,12 @@ const CLI_VERSION = '1.0.0';
 // OpenAI Constants
 const OPENAI_MODEL = 'gpt-4o'; // Latest model as of May 2024
 
+// GitHub OAuth Constants
+const DEFAULT_GITHUB_CLIENT_ID = 'your-default-client-id'; // Replace with your actual client ID
+const DEFAULT_GITHUB_CLIENT_SECRET = 'your-default-client-secret'; // Replace with your actual client secret
+const REDIRECT_URI_PROD = 'https://vibeinsights.xyz/callback';
+const REDIRECT_URI_DEV = 'https://54a5e666-dc40-4c6d-863f-d863a4bc27ae-00-1peum3pg6g6r3.kirk.replit.dev/callback';
+
 // Export constants
 module.exports = {
   USER_HOME,
@@ -32,5 +38,9 @@ module.exports = {
   CLI_NAME,
   CLI_DESCRIPTION,
   CLI_VERSION,
-  OPENAI_MODEL
+  OPENAI_MODEL,
+  DEFAULT_GITHUB_CLIENT_ID,
+  DEFAULT_GITHUB_CLIENT_SECRET,
+  REDIRECT_URI_PROD,
+  REDIRECT_URI_DEV
 };

@@ -14,16 +14,30 @@ const inquirer = require('inquirer');
 const ora = require('ora');
 const chalk = require('chalk');
 const simpleGit = require('simple-git');
-const { DATA_DIR } = require('../utils/constants');
+const { 
+  DATA_DIR,
+  DEFAULT_GITHUB_CLIENT_ID,
+  DEFAULT_GITHUB_CLIENT_SECRET,
+  REDIRECT_URI_PROD,
+  REDIRECT_URI_DEV
+} = require('../utils/constants');
 
 // GitHub OAuth configuration
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const GITHUB_API_URL = 'https://api.github.com';
-const REDIRECT_URI = 'http://localhost:3000/callback';
 const SCOPES = 'repo,read:user';
+
+// Determine if we're in development or production mode
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+// Get client ID and secret, preferring environment variables if set
+const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID || DEFAULT_GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET || DEFAULT_GITHUB_CLIENT_SECRET;
+
+// Use appropriate redirect URI based on environment
+const WEB_REDIRECT_URI = isDevelopment ? REDIRECT_URI_DEV : REDIRECT_URI_PROD;
+const LOCAL_REDIRECT_URI = 'http://localhost:3000/callback';
 
 // Token storage path
 const TOKEN_PATH = path.join(DATA_DIR, 'github-token.json');
@@ -140,9 +154,10 @@ function startLocalServer() {
 /**
  * Exchange authorization code for access token
  * @param {string} code - The authorization code
+ * @param {string} redirectUri - The redirect URI used in the authorization request
  * @returns {Promise<string>} The access token
  */
-async function exchangeCodeForToken(code) {
+async function exchangeCodeForToken(code, redirectUri) {
   try {
     const response = await axios.post(
       GITHUB_TOKEN_URL,
@@ -150,7 +165,7 @@ async function exchangeCodeForToken(code) {
         client_id: GITHUB_CLIENT_ID,
         client_secret: GITHUB_CLIENT_SECRET,
         code,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: redirectUri,
       },
       {
         headers: {
@@ -171,22 +186,34 @@ async function exchangeCodeForToken(code) {
 
 /**
  * Authenticate with GitHub
- * @param {boolean} forceAuth - Force re-authentication even if token exists
+ * @param {Object} options - Authentication options
+ * @param {boolean} options.forceAuth - Force re-authentication even if token exists
+ * @param {boolean} options.useWebRedirect - Whether to use the web redirect instead of local server
+ * @param {boolean} options.useCustomApp - Whether to use custom GitHub app credentials instead of defaults
  * @returns {Promise<string>} The access token
  */
-async function authenticate(forceAuth = false) {
+async function authenticate(options = {}) {
+  const { forceAuth = false, useWebRedirect = false, useCustomApp = false } = options;
+  
   // Check if client ID and secret are configured
-  if (!GITHUB_CLIENT_ID) {
+  if (useCustomApp && !process.env.GITHUB_CLIENT_ID) {
     throw new Error(
-      'GitHub Client ID not configured. Please set the GITHUB_CLIENT_ID environment variable.\n' +
+      'Custom GitHub Client ID not configured. Please set the GITHUB_CLIENT_ID environment variable.\n' +
       'See the documentation for setting up GitHub OAuth.'
     );
   }
   
-  if (!GITHUB_CLIENT_SECRET) {
+  if (useCustomApp && !process.env.GITHUB_CLIENT_SECRET) {
     throw new Error(
-      'GitHub Client Secret not configured. Please set the GITHUB_CLIENT_SECRET environment variable.\n' +
+      'Custom GitHub Client Secret not configured. Please set the GITHUB_CLIENT_SECRET environment variable.\n' +
       'See the documentation for setting up GitHub OAuth.'
+    );
+  }
+  
+  // For non-custom app, validate the default credentials
+  if (!useCustomApp && (GITHUB_CLIENT_ID === 'your-default-client-id' || GITHUB_CLIENT_SECRET === 'your-default-client-secret')) {
+    throw new Error(
+      'Default GitHub OAuth credentials are not configured in the CLI. Please set actual values in the constants.js file.'
     );
   }
   
@@ -200,23 +227,53 @@ async function authenticate(forceAuth = false) {
   
   console.log('Authenticating with GitHub...');
   
-  // Start local server to receive callback
-  const { server, codePromise } = startLocalServer();
+  // Use the appropriate redirect URI based on the option
+  const redirectUri = useWebRedirect ? WEB_REDIRECT_URI : LOCAL_REDIRECT_URI;
   
   try {
+    let code;
+    
     // Construct authorization URL
-    const authUrl = `${GITHUB_AUTH_URL}?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES)}`;
+    const authUrl = `${GITHUB_AUTH_URL}?client_id=${GITHUB_CLIENT_ID}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(SCOPES)}`;
     
-    // Open browser for authentication
-    console.log(chalk.cyan(`Opening browser for GitHub authentication...`));
-    await open(authUrl);
-    
-    // Wait for authorization code
-    const code = await codePromise;
+    if (useWebRedirect) {
+      // For web redirect, just open the browser and prompt the user to paste the code
+      console.log(chalk.cyan(`Opening browser for GitHub authentication...`));
+      await open(authUrl);
+      
+      console.log(chalk.yellow(`\nOnce you've authorized the application, you'll be redirected to ${WEB_REDIRECT_URI}`));
+      console.log(chalk.yellow(`You'll see a code in the URL after '?code='. Please copy and paste that code below.`));
+      
+      const { authCode } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'authCode',
+          message: 'Authorization code:',
+          validate: (input) => input.trim() ? true : 'Please enter the authorization code',
+        },
+      ]);
+      
+      code = authCode.trim();
+    } else {
+      // For local redirect, start a server and wait for the callback
+      const { server, codePromise } = startLocalServer();
+      
+      try {
+        // Open browser for authentication
+        console.log(chalk.cyan(`Opening browser for GitHub authentication...`));
+        await open(authUrl);
+        
+        // Wait for authorization code
+        code = await codePromise;
+      } finally {
+        // Close server
+        server.close();
+      }
+    }
     
     // Exchange code for token
     const spinner = ora('Exchanging code for token...').start();
-    const accessToken = await exchangeCodeForToken(code);
+    const accessToken = await exchangeCodeForToken(code, redirectUri);
     spinner.succeed('Successfully authenticated with GitHub');
     
     // Store token
@@ -225,9 +282,6 @@ async function authenticate(forceAuth = false) {
     return accessToken;
   } catch (error) {
     throw error;
-  } finally {
-    // Close server
-    server.close();
   }
 }
 
@@ -417,5 +471,12 @@ module.exports = {
   fetchRepositoryContents,
   cloneRepository,
   selectRepository,
-  logout
+  logout,
+  // Export constants for advanced usage
+  GITHUB_AUTH_URL,
+  GITHUB_TOKEN_URL,
+  GITHUB_API_URL,
+  SCOPES,
+  WEB_REDIRECT_URI,
+  LOCAL_REDIRECT_URI
 };

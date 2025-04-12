@@ -1,107 +1,69 @@
-# Setting up GitHub OAuth for Vibe Insights AI
+# GitHub OAuth Setup Guide for VibeInsights AI
 
-This guide walks through the process of setting up GitHub OAuth for your Vibe Insights AI CLI, allowing users to authenticate with GitHub and access repositories.
+This guide explains how VibeInsights AI uses GitHub OAuth for authentication and the options available to you.
 
-## 1. Create a GitHub OAuth App
+## Default Authentication
 
-First, you need to register a new OAuth application on GitHub:
+VibeInsights AI comes with pre-configured GitHub OAuth credentials that allow you to authenticate without creating your own GitHub OAuth application. When you run commands that require GitHub access (like `vibe list-repos` or `vibe analyze`), the tool will automatically use these credentials.
 
-1. Go to your GitHub account settings
-2. Navigate to **Developer settings** → **OAuth Apps** → **New OAuth App**
-3. Fill in the application details:
-   - **Application name**: Vibe Insights AI
-   - **Homepage URL**: Your project website or GitHub repository URL
-   - **Application description**: Optional description of your tool
-   - **Authorization callback URL**: `http://localhost:3000/callback`
-4. Click **Register application**
-5. Note your **Client ID**
-6. Click **Generate a new client secret** and save your **Client Secret**
+## Authentication Flow Options
 
-> **IMPORTANT**: The callback URL must be exactly `http://localhost:3000/callback` as this matches the local server the CLI starts during authentication.
+The CLI supports two authentication flows:
 
-## 2. Set Environment Variables
+### 1. Local Server (Default)
 
-You have two options for providing these credentials to your CLI:
+By default, the CLI starts a temporary local server on port 3000 to receive the OAuth callback. This is the simplest approach for most users as it happens automatically.
 
-### Option 1: Environment Variables in Development
+When you authenticate:
+1. The CLI opens your browser to GitHub's authorization page
+2. GitHub redirects back to `http://localhost:3000/callback` after you authorize
+3. The local server receives the authorization code and completes the authentication
 
-When developing locally, use environment variables:
+### 2. Web Redirect
+
+For cases where the local server approach doesn't work (like certain CI/CD environments or systems with firewall restrictions), you can use the web redirect flow:
+
+```bash
+vibe login --web-redirect
+```
+
+This will:
+1. Open your browser to GitHub's authorization page
+2. GitHub redirects to the VibeInsights website (https://vibeinsights.xyz/callback)
+3. The website displays the authorization code
+4. You copy this code and paste it back into the CLI prompt
+
+## Using Your Own OAuth Application
+
+If you prefer to use your own GitHub OAuth App instead of the built-in credentials:
+
+1. Create a GitHub OAuth application at https://github.com/settings/developers
+2. Set the Authorization callback URL to `http://localhost:3000/callback`
+3. Note your Client ID and Client Secret
+4. Set environment variables before running the CLI:
 
 ```bash
 export GITHUB_CLIENT_ID=your_client_id
 export GITHUB_CLIENT_SECRET=your_client_secret
+vibe login --use-custom-app
 ```
 
-### Option 2: Configuration for Published Package
+## Advanced Configuration
 
-For users of your published package, provide instructions to set these environment variables before using the GitHub integration features.
+If you're creating a custom integration, you'll need to:
 
-## 3. Configuration in the Code
+1. Create a GitHub OAuth App
+2. Set the callback URL to one of these options:
+   - `http://localhost:3000/callback` - For local server authentication
+   - `https://vibeinsights.xyz/callback` - For web redirect authentication
 
-The relevant code that uses these environment variables is in `src/api/github-auth.js`:
+## Troubleshooting
 
-```javascript
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
-const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
-const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
-const REDIRECT_URI = 'http://localhost:3000/callback';
-```
+If you encounter issues with GitHub authentication:
 
-These variables are already set up to use the environment variables you defined.
+1. **Token Storage**: Tokens are securely stored in `~/.vibeinsights/github-token.json`
+2. **Clear Tokens**: Run `vibe logout` to remove stored tokens
+3. **Force Re-authentication**: Use `vibe login --force` to bypass cached tokens
+4. **Access Scopes**: VibeInsights requires the `repo` and `read:user` scopes
 
-## 4. Testing the OAuth Flow
-
-To test the OAuth flow:
-
-1. Set the environment variables with your GitHub OAuth app credentials
-2. Run a command that requires GitHub access, such as:
-   ```bash
-   vibe interactive
-   ```
-   Then select "GitHub Repositories" when prompted for a source
-3. The CLI should open your browser and redirect to GitHub for authentication
-4. After authentication, GitHub will redirect back to your local server
-5. The CLI should then display your repositories
-
-## 5. Publishing Your Package with OAuth Support
-
-When publishing your package to npm, you should:
-
-1. Document the GitHub OAuth requirements in your README
-2. Instruct users that they'll need to create their own GitHub OAuth app for GitHub integration
-3. Provide detailed setup instructions for setting environment variables
-
-### Sample user instructions:
-
-```markdown
-## GitHub Integration Setup
-
-To use GitHub integration features:
-
-1. Create a GitHub OAuth app at https://github.com/settings/developers
-2. Set the callback URL to: http://localhost:3000/callback
-3. Set these environment variables:
-   ```
-   export GITHUB_CLIENT_ID=your_client_id
-   export GITHUB_CLIENT_SECRET=your_client_secret
-   ```
-4. Now you can use all GitHub-related features of the CLI
-```
-
-## 6. Security Considerations
-
-- **Never** commit your actual Client Secret to version control
-- **Never** hardcode these values in your published package
-- Use environment variables or a secure configuration mechanism
-- When storing the user's OAuth token, the CLI saves it in the user's home directory with appropriate permissions
-- The token includes an expiration time and is refreshed when needed
-
-## 7. Advanced Configuration
-
-For advanced scenarios, you might want to make these values configurable:
-
-1. Add CLI options to specify alternative client IDs and secrets
-2. Support multiple GitHub instances (like GitHub Enterprise)
-3. Allow custom callback URLs and ports
-
-These can be implemented by extending the current configuration system.
+For additional assistance, please open an issue on our GitHub repository at https://github.com/SaulBuilds/vibeinsights.
