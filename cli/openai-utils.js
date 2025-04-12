@@ -1,5 +1,5 @@
 /**
- * CodeInsight AI - OpenAI Utilities
+ * Vibe Insights AI - OpenAI Utilities
  * 
  * This file contains utilities for interacting with the OpenAI API
  */
@@ -290,7 +290,7 @@ async function getOpenAIKey(providedKey, interactive = true) {
           const os = require('os');
           const path = require('path');
           const fs = require('fs');
-          const configPath = path.join(os.homedir(), '.codeinsight');
+          const configPath = path.join(os.homedir(), '.vibeinsights');
           
           const config = fs.existsSync(configPath) 
             ? JSON.parse(fs.readFileSync(configPath, 'utf8')) 
@@ -299,7 +299,7 @@ async function getOpenAIKey(providedKey, interactive = true) {
           config.apiKey = answers.apiKey;
           
           fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
-          console.log(chalk.green('✓ API key saved to ~/.codeinsight'));
+          console.log(chalk.green('✓ API key saved to ~/.vibeinsights'));
         } catch (error) {
           console.log(chalk.red(`Failed to save API key: ${error.message}`));
         }

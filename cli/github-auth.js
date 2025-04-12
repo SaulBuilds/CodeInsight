@@ -1,5 +1,5 @@
 /**
- * CodeInsight AI - GitHub Authentication
+ * Vibe Insights AI - GitHub Authentication
  * 
  * This file contains utilities for authenticating with GitHub OAuth
  * and interacting with the GitHub API.
@@ -22,11 +22,11 @@ const config = {
   authorizationEndpoint: 'https://github.com/login/oauth/authorize',
   tokenEndpoint: 'https://github.com/login/oauth/access_token',
   scope: 'repo',
-  userAgent: 'CodeInsight-AI-CLI',
+  userAgent: 'VibeInsights-AI-CLI',
 };
 
 // Credentials storage path
-const CONFIG_DIR = path.join(os.homedir(), '.codeinsight');
+const CONFIG_DIR = path.join(os.homedir(), '.vibeinsights');
 const TOKEN_PATH = path.join(CONFIG_DIR, 'github-token.json');
 
 /**
