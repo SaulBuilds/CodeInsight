@@ -127,21 +127,26 @@ program
         return;
       }
 
-      // Get API key
-      const apiKey = getOpenAIKey(options.apiKey);
-      if (!apiKey) {
-        console.error(chalk.red('Error: OpenAI API key is required. Please provide it via --api-key option or OPENAI_API_KEY environment variable.'));
-        return;
-      }
-
-      // Validate API key
-      const validatingSpinner = ora('Validating OpenAI API key...').start();
-      const isValid = await validateApiKey(apiKey);
-      if (!isValid) {
-        validatingSpinner.fail(chalk.red('Invalid OpenAI API key'));
-        return;
-      }
-      validatingSpinner.succeed(chalk.green('OpenAI API key is valid'));
+      // Get API key - now interactive
+      try {
+        const apiKey = await getOpenAIKey(options.apiKey, true);
+        if (!apiKey) {
+          console.error(chalk.red('Error: OpenAI API key is required but none was provided.'));
+          console.log(chalk.yellow('You can provide it via:'));
+          console.log(chalk.gray('- Command line: --api-key=your_key'));
+          console.log(chalk.gray('- Environment: export OPENAI_API_KEY=your_key'));
+          console.log(chalk.gray('- Config file: create ~/.codeinsight file with {"apiKey": "your_key"}'));
+          return;
+        }
+        
+        // Validate API key
+        const validatingSpinner = ora('Validating OpenAI API key...').start();
+        const isValid = await validateApiKey(apiKey);
+        if (!isValid) {
+          validatingSpinner.fail(chalk.red('Invalid OpenAI API key'));
+          return;
+        }
+        validatingSpinner.succeed(chalk.green('OpenAI API key is valid'));
 
       // Get repository code
       const codeSpinner = ora('Retrieving repository code...').start();
