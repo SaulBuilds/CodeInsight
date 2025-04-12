@@ -116,12 +116,13 @@ export default function Documentation() {
               <CommandCard
                 title="Generate Code Story"
                 icon="book-open"
-                command="codeinsight generate-docs --type code_story --complexity detailed --source code.txt"
+                command="codeinsight generate-docs 1 --type code_story --complexity detailed"
                 description="Create a narrative explanation of complex code structures, making them easier to understand through storytelling."
                 options={[
+                  { name: "repository_id", description: "ID of the repository to analyze" },
                   { name: "--type", description: "Set to 'code_story' for this feature" },
                   { name: "--complexity", description: "simple, moderate, or detailed" },
-                  { name: "--source, -s", description: "Source code file" }
+                  { name: "--api-key", description: "OpenAI API key (or use OPENAI_API_KEY env variable)" }
                 ]}
                 generatedContent={[
                   "Narrative explanations of code",
