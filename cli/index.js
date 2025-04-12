@@ -80,7 +80,7 @@ function generateLogo() {
 function displayHeader() {
   const logoText = chalk.bold.rgb(142, 98, 87)(generateLogo());
   
-  const subText = chalk.gray('Repository Analysis & Documentation Tool');
+  const subText = chalk.gray('AI-powered Repository Analysis & Documentation Tool');
   
   console.log(boxen(`${logoText}\n\n${subText}`, {
     padding: 1,
@@ -95,6 +95,20 @@ function getColorForComplexity(value, threshold) {
   if (value < threshold * 0.5) return chalk.green(value);
   if (value < threshold) return chalk.yellow(value);
   return chalk.red(value);
+}
+
+/**
+ * Display a small logo for inline commands
+ */
+function displayInlineHeader() {
+  console.log(chalk.bold.rgb(142, 98, 87)(`
+██╗   ██╗██╗██████╗ ███████╗
+██║   ██║██║██╔══██╗██╔════╝
+██║   ██║██║██████╦╝█████╗  
+╚██╗ ██╔╝██║██╔══██╗██╔══╝  
+ ╚████╔╝ ██║██████╦╝███████╗
+  ╚═══╝  ╚═╝╚═════╝ ╚══════╝`));
+  console.log('');
 }
 
 /**
@@ -886,8 +900,8 @@ async function detectStackInteractive(repoPath) {
 
 // Define CLI program
 program
-  .name('codeinsight')
-  .description('A comprehensive CLI tool for AI researchers')
+  .name('vibe')
+  .description('AI-powered repository analysis & documentation generation')
   .version('1.0.0');
 
 // Interactive GitHub flow command
