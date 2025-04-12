@@ -72,14 +72,6 @@ export default function CliReference() {
                         Show version information
                       </span>
                     </li>
-                    <li className="flex">
-                      <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40">
-                        --quiet, -q
-                      </code>
-                      <span className="ml-4 text-gray-600 dark:text-gray-300">
-                        Suppress output and show only errors
-                      </span>
-                    </li>
                   </ul>
                 </CardContent>
               </Card>
@@ -91,22 +83,23 @@ export default function CliReference() {
                 Commands
               </h2>
               
-              <Tabs defaultValue="extract">
+              <Tabs defaultValue="analyze">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="extract">extract</TabsTrigger>
-                  <TabsTrigger value="generate-docs">generate-docs</TabsTrigger>
                   <TabsTrigger value="analyze">analyze</TabsTrigger>
-                  <TabsTrigger value="config">config</TabsTrigger>
+                  <TabsTrigger value="generate-docs">generate-docs</TabsTrigger>
+                  <TabsTrigger value="list-repos">list-repos</TabsTrigger>
+                  <TabsTrigger value="list-docs">list-docs</TabsTrigger>
+                  <TabsTrigger value="view-doc">view-doc</TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="extract">
+                <TabsContent value="analyze">
                   <Card>
                     <CardContent className="pt-6">
                       <h3 className="text-xl font-semibold text-text dark:text-white mb-2">
-                        extract
+                        analyze
                       </h3>
                       <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        Extract code from repository files and combine them into a single output file.
+                        Analyze repository and generate statistics about the codebase.
                       </p>
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -114,7 +107,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper extract [options]"
+                        code="repo-scraper analyze [directory] [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -127,17 +120,7 @@ export default function CliReference() {
                               --output, -o
                             </code>
                             <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Output file name (default: "combined_code.txt")
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --size, -s
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Maximum file size in bytes (only files below this size will be included)
+                              Output file name (default: "repo_analysis.txt")
                             </span>
                           </div>
                         </li>
@@ -154,10 +137,20 @@ export default function CliReference() {
                         <li className="flex flex-col">
                           <div className="flex items-start">
                             <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --dir, -d
+                              --max-size, -s
                             </code>
                             <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Target directory to analyze (default: current directory)
+                              Maximum file size in bytes to include
+                            </span>
+                          </div>
+                        </li>
+                        <li className="flex flex-col">
+                          <div className="flex items-start">
+                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
+                              --save
+                            </code>
+                            <span className="ml-4 text-gray-600 dark:text-gray-300">
+                              Save analysis to the server for future reference
                             </span>
                           </div>
                         </li>
@@ -168,7 +161,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper extract --output project_code.txt --exclude dist .cache --size 102400"
+                        code="repo-scraper analyze ./my-project --output stats.json --exclude dist,build"
                       />
                     </CardContent>
                   </Card>
@@ -189,7 +182,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper generate-docs [options]"
+                        code="repo-scraper generate-docs <repository_id> [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -199,60 +192,30 @@ export default function CliReference() {
                         <li className="flex flex-col">
                           <div className="flex items-start">
                             <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --source, -s
+                              --type
                             </code>
                             <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Source code file (result from extract command)
+                              Type of documentation to generate (architecture, user_stories, custom)
                             </span>
                           </div>
                         </li>
                         <li className="flex flex-col">
                           <div className="flex items-start">
                             <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --output, -o
+                              --prompt
                             </code>
                             <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Output file name (default: "documentation.{format}")
+                              Custom prompt for documentation generation
                             </span>
                           </div>
                         </li>
                         <li className="flex flex-col">
                           <div className="flex items-start">
                             <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --api-key, -k
+                              --api-key
                             </code>
                             <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              OpenAI API key (can also be set via OPENAI_API_KEY env variable)
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --type, -t
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Type of documentation to generate: "architecture", "user-stories", or "custom" (default: "architecture")
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --format, -f
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Output format: "md" or "html" (default: "md")
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --prompt, -p
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Custom prompt (required when type is "custom")
+                              OpenAI API key (optional, will use environment variable if not provided)
                             </span>
                           </div>
                         </li>
@@ -263,20 +226,20 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper generate-docs --source project_code.txt --type architecture --format md"
+                        code="repo-scraper generate-docs 1 --type architecture"
                       />
                     </CardContent>
                   </Card>
                 </TabsContent>
                 
-                <TabsContent value="analyze">
+                <TabsContent value="list-repos">
                   <Card>
                     <CardContent className="pt-6">
                       <h3 className="text-xl font-semibold text-text dark:text-white mb-2">
-                        analyze
+                        list-repos
                       </h3>
                       <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        Analyze repository and generate statistics about the codebase.
+                        List all analyzed repositories stored in the system.
                       </p>
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -284,64 +247,43 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper analyze [options]"
+                        code="repo-scraper list-repos"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
-                        Options
-                      </h4>
-                      <ul className="space-y-3">
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --dir, -d
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Target directory to analyze (default: current directory)
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --exclude, -x
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Additional exclusion pattern(s) (default: [".git", "node_modules"])
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --output, -o
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Output JSON file for statistics (default: prints to console)
-                            </span>
-                          </div>
-                        </li>
-                      </ul>
-                      
-                      <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
-                        Example
+                        Example Output
                       </h4>
                       <CodeBlock
-                        language="bash"
-                        code="repo-scraper analyze --dir ./my-project --output stats.json"
+                        language="plaintext"
+                        code="Repositories:
+-------------
+ID: 1
+Name: my-project
+Path: /home/user/projects/my-project
+Files: 120
+Size: 2.3 MB
+Analyzed: 4/12/2025, 10:21:34 AM
+---
+ID: 2
+Name: another-project
+Path: /home/user/projects/another-project
+Files: 85
+Size: 1.8 MB
+Analyzed: 4/12/2025, 11:45:12 AM
+---"
                       />
                     </CardContent>
                   </Card>
                 </TabsContent>
                 
-                <TabsContent value="config">
+                <TabsContent value="list-docs">
                   <Card>
                     <CardContent className="pt-6">
                       <h3 className="text-xl font-semibold text-text dark:text-white mb-2">
-                        config
+                        list-docs
                       </h3>
                       <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        View or update configuration settings.
+                        List all documentation generated for a specific repository.
                       </p>
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -349,50 +291,20 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper config [options] [key] [value]"
+                        code="repo-scraper list-docs <repository_id>"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
-                        Options
+                        Parameters
                       </h4>
                       <ul className="space-y-3">
                         <li className="flex flex-col">
                           <div className="flex items-start">
                             <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --list, -l
+                              repository_id
                             </code>
                             <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              List all configuration settings
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --get, -g
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Get a specific configuration value
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --set, -s
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Set a configuration value
-                            </span>
-                          </div>
-                        </li>
-                        <li className="flex flex-col">
-                          <div className="flex items-start">
-                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
-                              --delete, -d
-                            </code>
-                            <span className="ml-4 text-gray-600 dark:text-gray-300">
-                              Delete a configuration value
+                              ID of the repository to list documentation for
                             </span>
                           </div>
                         </li>
@@ -403,7 +315,96 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper config --set apiKey YOUR_OPENAI_API_KEY"
+                        code="repo-scraper list-docs 1"
+                      />
+                      
+                      <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
+                        Example Output
+                      </h4>
+                      <CodeBlock
+                        language="plaintext"
+                        code="Documentation:
+--------------
+ID: 1
+Type: architecture
+AI Model: gpt-4o
+Created: 4/12/2025, 10:30:15 AM
+---
+ID: 2
+Type: user_stories
+AI Model: gpt-4o
+Created: 4/12/2025, 10:35:22 AM
+---
+ID: 3
+Type: custom
+AI Model: gpt-4o
+Created: 4/12/2025, 11:05:45 AM
+---"
+                      />
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+                
+                <TabsContent value="view-doc">
+                  <Card>
+                    <CardContent className="pt-6">
+                      <h3 className="text-xl font-semibold text-text dark:text-white mb-2">
+                        view-doc
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300 mb-4">
+                        View a specific document in the terminal or save it as a markdown file.
+                      </p>
+                      
+                      <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
+                        Usage
+                      </h4>
+                      <CodeBlock
+                        language="bash"
+                        code="repo-scraper view-doc <document_id> [options]"
+                      />
+                      
+                      <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
+                        Parameters
+                      </h4>
+                      <ul className="space-y-3">
+                        <li className="flex flex-col">
+                          <div className="flex items-start">
+                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
+                              document_id
+                            </code>
+                            <span className="ml-4 text-gray-600 dark:text-gray-300">
+                              ID of the document to view
+                            </span>
+                          </div>
+                        </li>
+                      </ul>
+                      
+                      <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
+                        Options
+                      </h4>
+                      <ul className="space-y-3">
+                        <li className="flex flex-col">
+                          <div className="flex items-start">
+                            <code className="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded text-secondary dark:text-blue-400 font-mono w-40 shrink-0">
+                              --format
+                            </code>
+                            <span className="ml-4 text-gray-600 dark:text-gray-300">
+                              Output format: "terminal" or "markdown" (default: "terminal")
+                            </span>
+                          </div>
+                        </li>
+                      </ul>
+                      
+                      <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
+                        Examples
+                      </h4>
+                      <CodeBlock
+                        language="bash"
+                        code="# View document in terminal
+repo-scraper view-doc 1
+
+# Save document as markdown file
+repo-scraper view-doc 1 --format markdown"
                       />
                     </CardContent>
                   </Card>
@@ -424,15 +425,15 @@ export default function CliReference() {
                       Generate Architecture Documentation
                     </h3>
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
-                      Extract code and generate architectural documentation in one go:
+                      Analyze repository and generate architectural documentation in one go:
                     </p>
                     <CodeBlock
                       language="bash"
-                      code={`# Step 1: Extract code from repository
-repo-scraper extract --output my-project-code.txt
+                      code="# Analyze repository and save to server
+repo-scraper analyze . --save
 
-# Step 2: Generate architectural documentation
-repo-scraper generate-docs --source my-project-code.txt --type architecture`}
+# Generate architectural documentation (assuming repository id is 1)
+repo-scraper generate-docs 1 --type architecture"
                     />
                   </CardContent>
                 </Card>
@@ -447,8 +448,8 @@ repo-scraper generate-docs --source my-project-code.txt --type architecture`}
                     </p>
                     <CodeBlock
                       language="bash"
-                      code={`# Using an already extracted code file
-repo-scraper generate-docs --source my-project-code.txt --type user-stories --output user-stories.md`}
+                      code="# Generate user stories for repository id 1
+repo-scraper generate-docs 1 --type user_stories"
                     />
                   </CardContent>
                 </Card>
@@ -464,11 +465,7 @@ repo-scraper generate-docs --source my-project-code.txt --type user-stories --ou
                     <CodeBlock
                       language="bash"
                       code={`# Ask specific questions about the codebase
-repo-scraper generate-docs \\
-  --source my-project-code.txt \\
-  --type custom \\
-  --prompt "Identify potential security vulnerabilities in this code and suggest fixes" \\
-  --output security-review.md`}
+repo-scraper generate-docs 1 --type custom --prompt "Identify potential security vulnerabilities in this code and suggest fixes"`}
                     />
                   </CardContent>
                 </Card>
@@ -512,7 +509,7 @@ repo-scraper generate-docs \\
                         code="Warning: The extracted code is very large (5MB). This may cause issues with the OpenAI API token limits."
                       />
                       <p className="mt-2 text-gray-600 dark:text-gray-300">
-                        Solution: Use the --size option to limit file sizes or narrow your extraction to specific directories.
+                        Solution: Use the --max-size option to limit file sizes or narrow your extraction to specific directories.
                       </p>
                     </div>
                     

@@ -13,19 +13,24 @@
     "code",
     "openai",
     "documentation",
+    "ai",
     "analysis"
   ],
   "author": "RepoScraper Team",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.6.8",
     "chalk": "^4.1.2",
-    "commander": "^13.1.0",
-    "inquirer": "^8.2.6",
-    "marked": "^12.0.1",
-    "marked-terminal": "^7.0.0",
-    "open": "^10.1.0",
-    "ora": "^5.4.1"
+    "commander": "^9.4.0",
+    "ora": "^5.4.1",
+    "openai": "^4.20.1",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "marked": "^9.1.5",
+    "marked-terminal": "^5.2.0",
+    "boxen": "^5.1.2",
+    "inquirer": "^8.2.4",
+    "conf": "^10.2.0",
+    "glob": "^10.3.10"
   },
   "engines": {
     "node": ">=14.0.0"
