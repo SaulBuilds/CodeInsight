@@ -6,7 +6,7 @@ A comprehensive CLI tool for AI researchers that analyzes repositories, generate
 
 - **Repository Analysis**: Extract and analyze code from a directory
 - **OpenAI Integration**: Generate AI-powered documentation about repository architecture
-- **Multiple Documentation Types**: Generate architecture docs, user stories, or custom analysis
+- **Multiple Documentation Types**: Generate architecture docs, user stories, code stories, or custom analysis
 - **Markdown Output**: All documentation is generated in markdown format for easy viewing and sharing
 - **Terminal Rendering**: View documentation directly in your terminal with proper formatting
 
@@ -45,11 +45,16 @@ Options:
 Generate documentation from repository code using OpenAI:
 
 ```bash
+# Generate architectural documentation
 codeinsight generate-docs <repository_id> --type architecture
+
+# Generate narrative code story with moderate complexity
+codeinsight generate-docs <repository_id> --type code_story --complexity moderate
 ```
 
 Options:
-- `--type`: Type of documentation to generate (architecture, user_stories, custom)
+- `--type`: Type of documentation to generate (architecture, user_stories, code_story, custom)
+- `--complexity`: Complexity level for code stories (simple, moderate, detailed) - only used with type=code_story
 - `--prompt`: Custom prompt for documentation generation (required if type=custom)
 - `--api-key`: OpenAI API key (will use OPENAI_API_KEY environment variable if not provided)
 
@@ -79,6 +84,25 @@ codeinsight view-doc <document_id> --format terminal
 
 Options:
 - `--format`: Output format: "terminal" or "markdown" (default: "terminal")
+
+## Code Story Feature
+
+The Code Story feature transforms complex code structures into narrative explanations using OpenAI's language models. It helps developers and researchers understand intricate code by creating engaging stories that explain:
+
+- **Design Decisions**: Why code is structured a certain way
+- **Logic Flow**: How data and control flow through the system
+- **Complex Algorithms**: Detailed explanations using metaphors and analogies
+- **Architecture Patterns**: The reasoning behind architectural choices
+
+Choose from three complexity levels:
+- **Simple**: Beginner-friendly explanations focusing on high-level concepts
+- **Moderate**: Balanced technical details with narrative storytelling
+- **Detailed**: In-depth explanations for experienced developers
+
+Example usage:
+```bash
+codeinsight generate-docs 1 --type code_story --complexity simple
+```
 
 ## Environment Variables
 
