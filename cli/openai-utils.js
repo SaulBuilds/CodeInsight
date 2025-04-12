@@ -229,10 +229,91 @@ async function generateCodeStory(codeContent, complexity = 'moderate', apiKey) {
 /**
  * Get OpenAI API key from environment or user input
  * @param {string} providedKey - The key provided by the user via CLI
- * @returns {string|null} - The API key or null if not found
+ * @param {boolean} interactive - Whether to prompt the user for input if key not found
+ * @returns {Promise<string|null>} - The API key or null if not found
  */
-function getOpenAIKey(providedKey) {
-  return providedKey || process.env.OPENAI_API_KEY || null;
+async function getOpenAIKey(providedKey, interactive = true) {
+  // Check command line arg first
+  if (providedKey) {
+    return providedKey;
+  }
+  
+  // Then check environment variable
+  if (process.env.OPENAI_API_KEY) {
+    return process.env.OPENAI_API_KEY;
+  }
+  
+  // Check config file
+  try {
+    const os = require('os');
+    const path = require('path');
+    const fs = require('fs');
+    const configPath = path.join(os.homedir(), '.codeinsight');
+    
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      if (config.apiKey) {
+        return config.apiKey;
+      }
+    }
+  } catch (error) {
+    // Ignore config file errors
+  }
+  
+  // If interactive mode is enabled, prompt the user
+  if (interactive) {
+    try {
+      const inquirer = require('inquirer');
+      
+      console.log(chalk.yellow('\n🔑 OpenAI API Key Required'));
+      console.log(chalk.gray('This command requires an OpenAI API key to function.'));
+      console.log(chalk.gray('Your key will only be used for this session and not stored unless you specify.'));
+      
+      const answers = await inquirer.prompt([
+        {
+          type: 'password',
+          name: 'apiKey',
+          message: 'Enter your OpenAI API key:',
+          validate: (input) => input.length > 0 ? true : 'API key is required for this operation'
+        },
+        {
+          type: 'confirm',
+          name: 'saveKey',
+          message: 'Would you like to save this key for future use? (Saved to ~/.codeinsight)',
+          default: false
+        }
+      ]);
+      
+      // Save the key if requested
+      if (answers.saveKey) {
+        try {
+          const os = require('os');
+          const path = require('path');
+          const fs = require('fs');
+          const configPath = path.join(os.homedir(), '.codeinsight');
+          
+          const config = fs.existsSync(configPath) 
+            ? JSON.parse(fs.readFileSync(configPath, 'utf8')) 
+            : {};
+          
+          config.apiKey = answers.apiKey;
+          
+          fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
+          console.log(chalk.green('✓ API key saved to ~/.codeinsight'));
+        } catch (error) {
+          console.log(chalk.red(`Failed to save API key: ${error.message}`));
+        }
+      }
+      
+      return answers.apiKey;
+    } catch (error) {
+      console.log(chalk.red(`Error prompting for API key: ${error.message}`));
+      return null;
+    }
+  }
+  
+  // If we get here, no key was found and interactive mode is disabled
+  return null;
 }
 
 module.exports = {
