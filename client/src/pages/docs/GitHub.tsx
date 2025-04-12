@@ -4,12 +4,12 @@ export default function GitHubIntegrationPage() {
   return (
     <DocLayout
       title="GitHub Integration" 
-      description="Connect CodeInsight AI with GitHub to analyze your repositories"
+      description="Connect VibeInsights AI with GitHub to analyze your repositories"
     >
       <div className="prose dark:prose-invert max-w-none">
         <h2 id="github-overview">Overview</h2>
         <p>
-          CodeInsight AI provides seamless integration with GitHub, allowing you to access, analyze, and generate 
+          VibeInsights AI provides seamless integration with GitHub, allowing you to access, analyze, and generate 
           documentation for any repositories that you have access to on GitHub. This integration uses OAuth to securely 
           authenticate with your GitHub account without needing to store your credentials.
         </p>
@@ -18,7 +18,7 @@ export default function GitHubIntegrationPage() {
         <p>
           To use the GitHub integration, simply run the following command:
         </p>
-        <pre><code>codeinsight github</code></pre>
+        <pre><code>vibeinsights github</code></pre>
         <p>
           This will start an interactive flow that guides you through:
         </p>
@@ -31,10 +31,10 @@ export default function GitHubIntegrationPage() {
 
         <h2 id="authentication">Authentication Process</h2>
         <p>
-          When you first run the <code>github</code> command, CodeInsight will:
+          When you first run the <code>github</code> command, VibeInsights will:
         </p>
         <ol>
-          <li>Check for existing authentication tokens in <code>~/.codeinsight/github-token.json</code></li>
+          <li>Check for existing authentication tokens in <code>~/.vibeinsights/github-token.json</code></li>
           <li>If no valid token exists, launch your default browser to GitHub's OAuth page</li>
           <li>Start a local server on port 3000 to receive the OAuth callback</li>
           <li>After authorization, securely store the token for future use</li>
@@ -63,7 +63,7 @@ export default function GitHubIntegrationPage() {
 
         <h2 id="analysis-options">Analysis Options</h2>
         <p>
-          Once you've selected a repository, CodeInsight offers several analysis options:
+          Once you've selected a repository, VibeInsights offers several analysis options:
         </p>
         <ul>
           <li><strong>Extract code</strong> - Extracts all code files for analysis</li>
@@ -81,14 +81,14 @@ export default function GitHubIntegrationPage() {
         <p>
           To revoke the stored GitHub credentials, use:
         </p>
-        <pre><code>codeinsight logout</code></pre>
+        <pre><code>vibeinsights logout</code></pre>
         <p>
           This will remove the stored token from your local machine.
         </p>
 
         <h2 id="permissions">Required Permissions</h2>
         <p>
-          CodeInsight AI requests the following GitHub permissions:
+          VibeInsights AI requests the following GitHub permissions:
         </p>
         <ul>
           <li><code>repo</code> - To access your repositories (including private ones if you wish to analyze them)</li>
@@ -106,7 +106,7 @@ export default function GitHubIntegrationPage() {
           <li><code>GITHUB_CLIENT_SECRET</code> - Your GitHub OAuth app client secret</li>
         </ul>
         <p>
-          If you're a developer building on top of CodeInsight AI, you can register a GitHub OAuth app at 
+          If you're a developer building on top of VibeInsights AI, you can register a GitHub OAuth app at 
           <a href="https://github.com/settings/developers" target="_blank" rel="noopener noreferrer">
             https://github.com/settings/developers
           </a>
