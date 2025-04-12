@@ -16,7 +16,7 @@ export default function DocsIndex() {
         </p>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-          <Link href="/docs/installation">
+          <Link href="/docs/Installation">
             <div className="cursor-pointer">
               <FeatureCard
                 icon="download"
@@ -27,7 +27,7 @@ export default function DocsIndex() {
             </div>
           </Link>
           
-          <Link href="/docs/quick-start">
+          <Link href="/docs/QuickStart">
             <div className="cursor-pointer">
               <FeatureCard
                 icon="play"
