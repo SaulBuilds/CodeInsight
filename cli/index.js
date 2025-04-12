@@ -26,6 +26,10 @@ const {
   generateCodeStory,
   getOpenAIKey 
 } = require('./openai-utils');
+const { analyzeDependencies } = require('./dep-analyzer');
+const { analyzeComplexity } = require('./complexity-analyzer');
+const { searchCodebase, formatSearchResults } = require('./search');
+const { detectTechStack } = require('./tech-detector');
 
 // Load environment variables from .env file
 dotenv.config();
@@ -192,10 +196,10 @@ program
         if (viewFull) {
           console.log('\n' + marked(documentation));
         }
-
-    } catch (error) {
-      ora().fail(chalk.red('Documentation generation failed'));
-      console.error(chalk.red(`Error: ${error.message}`));
+      } catch (error) {
+        ora().fail(chalk.red('Documentation generation failed'));
+        console.error(chalk.red(`Error: ${error.message}`));
+      }
     }
   });
 
