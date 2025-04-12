@@ -337,6 +337,111 @@ program
     }
   });
 
+// Configure analyze-deps command (Dependency Graph Analysis)
+program
+  .command('analyze-deps [directory]')
+  .description('Analyze dependencies between files in a repository')
+  .option('-o, --output <format>', 'Output format: dot, json, html (default: "html")', 'html')
+  .option('-d, --depth <level>', 'Maximum depth for dependency analysis', '10')
+  .option('-f, --filter <pattern>', 'Filter files by pattern (glob syntax)')
+  .option('--exclude <pattern>', 'Exclude files by pattern (glob syntax)')
+  .option('--highlight-circular', 'Highlight circular dependencies', false)
+  .option('--show-external', 'Include external dependencies', false)
+  .action(async (directory = '.', options) => {
+    try {
+      const spinner = ora('Analyzing dependencies...').start();
+      // Dependency analysis will be implemented here
+      spinner.succeed(chalk.green('Dependency analysis completed'));
+      console.log(chalk.yellow('This feature is coming soon!'));
+    } catch (error) {
+      ora().fail(chalk.red('Dependency analysis failed'));
+      console.error(chalk.red(`Error: ${error.message}`));
+    }
+  });
+
+// Configure complexity command (Code Complexity Metrics)
+program
+  .command('complexity [directory]')
+  .description('Calculate code complexity metrics for a repository')
+  .option('-o, --output <format>', 'Output format: json, html, csv (default: "html")', 'html')
+  .option('-t, --threshold <number>', 'Complexity threshold for highlighting', '10')
+  .option('-l, --language <language>', 'Filter by programming language')
+  .option('-f, --filter <pattern>', 'Filter files by pattern (glob syntax)')
+  .option('--exclude <pattern>', 'Exclude files by pattern (glob syntax)')
+  .option('--details', 'Show detailed breakdown by function/method', false)
+  .action(async (directory = '.', options) => {
+    try {
+      const spinner = ora('Calculating complexity metrics...').start();
+      // Complexity analysis will be implemented here
+      spinner.succeed(chalk.green('Complexity analysis completed'));
+      console.log(chalk.yellow('This feature is coming soon!'));
+    } catch (error) {
+      ora().fail(chalk.red('Complexity analysis failed'));
+      console.error(chalk.red(`Error: ${error.message}`));
+    }
+  });
+
+// Configure search command (Natural Language Search)
+program
+  .command('search <query>')
+  .description('Search the codebase using natural language')
+  .option('-d, --directory <path>', 'Repository directory to search', '.')
+  .option('-n, --limit <number>', 'Maximum number of results', '10')
+  .option('-c, --context <number>', 'Lines of context to show', '3')
+  .option('--api-key <key>', 'OpenAI API key')
+  .option('--no-embeddings', 'Use simple text search instead of embeddings', false)
+  .action(async (query, options) => {
+    try {
+      // First check if we need to get the API key
+      if (options.embeddings) {
+        try {
+          const apiKey = await getOpenAIKey(options.apiKey, true);
+          if (!apiKey) {
+            console.error(chalk.red('Error: OpenAI API key is required for semantic search.'));
+            console.log(chalk.yellow('Try again with --no-embeddings to use simple text search instead.'));
+            return;
+          }
+          
+          // We'll implement semantic search here using the API key
+          const spinner = ora('Performing semantic code search...').start();
+          spinner.succeed(chalk.green('Search completed'));
+          console.log(chalk.yellow('Semantic search feature is coming soon!'));
+        } catch (error) {
+          ora().fail(chalk.red('Search failed'));
+          console.error(chalk.red(`Error: ${error.message}`));
+        }
+      } else {
+        // Fallback to simple text search without API
+        const spinner = ora(`Searching for "${query}"...`).start();
+        // Simple search implementation will go here
+        spinner.succeed(chalk.green('Search completed'));
+        console.log(chalk.yellow('Simple text search feature is coming soon!'));
+      }
+    } catch (error) {
+      ora().fail(chalk.red('Search failed'));
+      console.error(chalk.red(`Error: ${error.message}`));
+    }
+  });
+
+// Configure detect-stack command (Tech Stack Detection)
+program
+  .command('detect-stack [directory]')
+  .description('Detect technologies, frameworks and libraries used in a repository')
+  .option('-o, --output <format>', 'Output format: json, html, markdown (default: "markdown")', 'markdown')
+  .option('--check-outdated', 'Check for outdated dependencies', false)
+  .option('--recommendations', 'Show recommendations for additional tools', false)
+  .action(async (directory = '.', options) => {
+    try {
+      const spinner = ora('Detecting tech stack...').start();
+      // Tech stack detection will be implemented here
+      spinner.succeed(chalk.green('Tech stack detection completed'));
+      console.log(chalk.yellow('This feature is coming soon!'));
+    } catch (error) {
+      ora().fail(chalk.red('Tech stack detection failed'));
+      console.error(chalk.red(`Error: ${error.message}`));
+    }
+  });
+
 // Parse arguments
 program.parse(process.argv);
 
