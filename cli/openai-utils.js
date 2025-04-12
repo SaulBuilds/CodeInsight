@@ -248,7 +248,7 @@ async function getOpenAIKey(providedKey, interactive = true) {
     const os = require('os');
     const path = require('path');
     const fs = require('fs');
-    const configPath = path.join(os.homedir(), '.codeinsight');
+    const configPath = path.join(os.homedir(), '.vibeinsights');
     
     if (fs.existsSync(configPath)) {
       const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
@@ -279,7 +279,7 @@ async function getOpenAIKey(providedKey, interactive = true) {
         {
           type: 'confirm',
           name: 'saveKey',
-          message: 'Would you like to save this key for future use? (Saved to ~/.codeinsight)',
+          message: 'Would you like to save this key for future use? (Saved to ~/.vibeinsights)',
           default: false
         }
       ]);
