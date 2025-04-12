@@ -12,7 +12,7 @@ const { stdout, stderr } = require('stdout-stderr');
 const mockFs = require('mock-fs');
 
 // Path to the CLI
-const CLI_PATH = path.join(__dirname, '..', 'index.js');
+const CLI_PATH = path.join(__dirname, '..', 'index.js'); // This points to the main entry point that loads from src/
 
 // Test helpers
 function runCommand(args = '') {
