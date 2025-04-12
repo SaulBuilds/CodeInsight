@@ -18,6 +18,7 @@ const { DATA_DIR } = require('../utils/constants');
 
 // GitHub OAuth configuration
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
+const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 const GITHUB_AUTH_URL = 'https://github.com/login/oauth/authorize';
 const GITHUB_TOKEN_URL = 'https://github.com/login/oauth/access_token';
 const GITHUB_API_URL = 'https://api.github.com';
@@ -147,7 +148,7 @@ async function exchangeCodeForToken(code) {
       GITHUB_TOKEN_URL,
       {
         client_id: GITHUB_CLIENT_ID,
-        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        client_secret: GITHUB_CLIENT_SECRET,
         code,
         redirect_uri: REDIRECT_URI,
       },
@@ -174,9 +175,19 @@ async function exchangeCodeForToken(code) {
  * @returns {Promise<string>} The access token
  */
 async function authenticate(forceAuth = false) {
-  // Check if client ID is configured
+  // Check if client ID and secret are configured
   if (!GITHUB_CLIENT_ID) {
-    throw new Error('GitHub Client ID not configured. Please set the GITHUB_CLIENT_ID environment variable.');
+    throw new Error(
+      'GitHub Client ID not configured. Please set the GITHUB_CLIENT_ID environment variable.\n' +
+      'See the documentation for setting up GitHub OAuth.'
+    );
+  }
+  
+  if (!GITHUB_CLIENT_SECRET) {
+    throw new Error(
+      'GitHub Client Secret not configured. Please set the GITHUB_CLIENT_SECRET environment variable.\n' +
+      'See the documentation for setting up GitHub OAuth.'
+    );
   }
   
   if (!forceAuth) {

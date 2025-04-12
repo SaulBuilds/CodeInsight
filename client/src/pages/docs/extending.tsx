@@ -283,7 +283,7 @@ module.exports = {
     
     return output;
   }
-};`}</code></pre>
+}`}</code></pre>
           
           <p className="mt-4">
             After installing this plugin, you could use the new format:
