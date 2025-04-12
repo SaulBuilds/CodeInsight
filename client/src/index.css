@@ -1,6 +1,7 @@
 /* Import font families */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Source+Code+Pro:wght@400;500;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
 @tailwind base;
@@ -9,111 +10,111 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 47.4% 11.2%;
+    --background: 40 30% 98%;
+    --foreground: 20 15% 20%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 30 20% 94%;
+    --muted-foreground: 25 5% 45%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 47.4% 11.2%;
+    --popover: 40 30% 99%;
+    --popover-foreground: 20 15% 20%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 280 75% 40%;
+    --border: 30 10% 85%;
+    --input: 30 10% 85%;
+    --ring: 30 50% 40%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 47.4% 11.2%;
+    --card-foreground: 20 15% 20%;
 
-    --primary: 280 75% 40%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 30 50% 40%;
+    --primary-foreground: 40 30% 98%;
 
-    --secondary: 199 89% 48%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 25 30% 35%;
+    --secondary-foreground: 40 30% 98%;
 
-    --accent: 262 83% 58%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 35 60% 50%;
+    --accent-foreground: 40 30% 98%;
 
-    --destructive: 0 100% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 85% 50%;
+    --destructive-foreground: 40 30% 98%;
 
-    --chart-1: 280 75% 40%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 262 83% 58%;
-    --chart-4: 326 100% 60%;
-    --chart-5: 174 86% 45%;
+    --chart-1: 30 50% 40%;
+    --chart-2: 25 30% 35%;
+    --chart-3: 45 60% 45%;
+    --chart-4: 15 30% 40%;
+    --chart-5: 35 60% 50%;
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 222.2 47.4% 11.2%;
-    --sidebar-primary: 280 75% 40%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222.2 47.4% 11.2%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 280 75% 40%;
+    --sidebar-background: 40 30% 98%;
+    --sidebar-foreground: 20 15% 20%;
+    --sidebar-primary: 30 50% 40%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 30 20% 94%;
+    --sidebar-accent-foreground: 20 15% 20%;
+    --sidebar-border: 30 10% 85%;
+    --sidebar-ring: 30 50% 40%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
     
     /* Animation variables */
     --animated-gradient: linear-gradient(60deg, 
-      rgba(84, 24, 122, 0.05) 0%, 
-      rgba(122, 73, 156, 0.1) 25%, 
-      rgba(65, 128, 185, 0.05) 50%, 
-      rgba(84, 24, 122, 0.1) 75%, 
-      rgba(122, 73, 156, 0.05) 100%);
+      rgba(160, 120, 90, 0.05) 0%, 
+      rgba(140, 110, 80, 0.1) 25%, 
+      rgba(180, 140, 100, 0.05) 50%, 
+      rgba(160, 120, 90, 0.1) 75%, 
+      rgba(140, 110, 80, 0.05) 100%);
   }
 
   .dark {
-    --background: 260 15% 10%;
-    --foreground: 210 40% 98%;
+    --background: 25 15% 12%;
+    --foreground: 40 10% 90%;
 
-    --muted: 260 20% 18%;
-    --muted-foreground: 215 20.2% 75%;
+    --muted: 25 10% 18%;
+    --muted-foreground: 35 10% 75%;
 
-    --popover: 260 15% 8%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 25 15% 10%;
+    --popover-foreground: 40 10% 90%;
 
-    --border: 260 20% 20%;
-    --input: 260 20% 20%;
-    --ring: 280 75% 60%;
+    --border: 25 10% 20%;
+    --input: 25 10% 20%;
+    --ring: 30 40% 35%;
 
-    --card: 260 15% 12%;
-    --card-foreground: 210 40% 98%;
+    --card: 25 15% 15%;
+    --card-foreground: 40 10% 90%;
 
-    --primary: 280 75% 60%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 30 40% 35%;
+    --primary-foreground: 40 10% 90%;
 
-    --secondary: 199 89% 48%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 15 30% 30%;
+    --secondary-foreground: 40 10% 90%;
 
-    --accent: 262 83% 68%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 35 40% 40%;
+    --accent-foreground: 40 10% 90%;
 
-    --destructive: 0 63% 50%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 63% 45%;
+    --destructive-foreground: 40 10% 90%;
 
-    --chart-1: 280 75% 60%;
-    --chart-2: 199 89% 48%;
-    --chart-3: 262 83% 68%;
-    --chart-4: 326 100% 70%;
-    --chart-5: 174 86% 45%;
+    --chart-1: 30 40% 35%;
+    --chart-2: 15 30% 30%;
+    --chart-3: 45 40% 35%;
+    --chart-4: 20 40% 30%;
+    --chart-5: 35 40% 40%;
 
-    --sidebar-background: 260 20% 12%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 280 75% 60%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 260 20% 18%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 260 20% 20%;
-    --sidebar-ring: 280 75% 60%;
+    --sidebar-background: 25 15% 15%;
+    --sidebar-foreground: 40 10% 90%;
+    --sidebar-primary: 30 40% 35%;
+    --sidebar-primary-foreground: 40 10% 90%;
+    --sidebar-accent: 25 10% 18%;
+    --sidebar-accent-foreground: 40 10% 90%;
+    --sidebar-border: 25 10% 20%;
+    --sidebar-ring: 30 40% 35%;
     
     /* Animation variables */
     --animated-gradient: linear-gradient(60deg, 
-      rgba(84, 24, 122, 0.1) 0%, 
-      rgba(122, 73, 156, 0.2) 25%, 
-      rgba(65, 128, 185, 0.1) 50%, 
-      rgba(84, 24, 122, 0.2) 75%, 
-      rgba(122, 73, 156, 0.1) 100%);
+      rgba(100, 80, 60, 0.1) 0%, 
+      rgba(120, 90, 70, 0.15) 25%, 
+      rgba(80, 60, 50, 0.1) 50%, 
+      rgba(100, 80, 60, 0.15) 75%, 
+      rgba(80, 60, 50, 0.1) 100%);
   }
 }
 
@@ -137,11 +138,37 @@
 
 /* Added custom CSS for documentation site */
 .font-mono {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Source Code Pro', monospace;
 }
 
 .font-sans {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Source Sans 3', sans-serif;
+}
+
+.font-serif {
+  font-family: 'Fraunces', serif;
+}
+
+/* Typography enhancements */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.leading-relaxed {
+  line-height: 1.6;
+}
+
+/* Enhance readability */
+p, li {
+  font-family: 'Source Sans 3', sans-serif;
+  line-height: 1.6;
+}
+
+code, pre {
+  font-family: 'Source Code Pro', monospace;
 }
 
 /* Animated background and vector effects */
@@ -281,6 +308,16 @@
   position: relative;
   overflow: hidden;
   border-radius: var(--radius);
-  background: hsl(260 20% 8%);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.3);
+  background: hsl(25 15% 15%);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+}
+
+.enhanced-code-block::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(to bottom, hsl(var(--primary)), hsl(var(--secondary)));
 }
