@@ -1,0 +1,164 @@
+Create the Project Files
+package.json
+Create a new package.json file. This example uses a package name of "repo-scraper-cli" and defines the bin property so that npm knows which file to use as the CLI executable.
+
+json
+Copy
+{
+  "name": "repo-scraper-cli",
+  "version": "1.0.0",
+  "description": "A CLI tool that scrapes repository code and aggregates it into one file.",
+  "main": "index.js",
+  "bin": {
+    "repo-scraper": "./index.js"
+  },
+  "keywords": [
+    "cli",
+    "repository",
+    "scrape",
+    "code"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.0.0",
+    "commander": "^9.4.0"
+  }
+}
+index.js
+Create an index.js file with the following content. (Be sure to set its executable bit with chmod +x index.js after creation.) This script uses Node’s built-in fs and path modules along with commander and chalk for styling and CLI argument parsing.
+
+js
+Copy
+#!/usr/bin/env node
+
+/**
+ * repo-scraper-cli
+ * A lightweight CLI tool to scrape all code files in a repo and combine them into one output file.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const { program } = require('commander');
+const chalk = require('chalk');
+
+// Define CLI options
+program
+  .version('1.0.0')
+  .description('Scrape repository code and combine it into one file.')
+  .option('-o, --output <output>', 'Output file name', 'combined_code.txt')
+  .option('-s, --size <size>', 'Maximum file size in bytes (only files <= this size will be included)')
+  .option('-x, --exclude <pattern...>', 'Additional exclusion pattern(s); matches against the file\'s full path')
+  .parse(process.argv);
+
+const options = program.opts();
+const outputFile = path.resolve(process.cwd(), options.output);
+const maxSize = options.size ? parseInt(options.size, 10) : null;
+const additionalExclusions = options.exclude || [];
+
+// Helper: Determine whether a given file path should be excluded.
+const isExcluded = (filePath) => {
+  // Exclude if any part of the path starts with a dot (hidden files/folders)
+  if (filePath.split(path.sep).some(part => part.startsWith('.'))) {
+    return true;
+  }
+  // Exclude any file inside a node_modules directory
+  if (filePath.includes(`${path.sep}node_modules${path.sep}`)) {
+    return true;
+  }
+  // Exclude the CLI script file itself and the output file
+  if (filePath === __filename || filePath === outputFile) {
+    return true;
+  }
+  // Exclude if additional exclusion patterns match anywhere in the file's path
+  return additionalExclusions.some(pattern => filePath.includes(pattern));
+};
+
+// Helper: A basic heuristic to decide if a file is text.
+// Here we simply check for NUL (binary) characters.
+const isTextFile = (filePath) => {
+  try {
+    const content = fs.readFileSync(filePath);
+    // If a null character (0) is present, assume it's binary.
+    return !content.includes(0);
+  } catch (err) {
+    return false;
+  }
+};
+
+// Recursively traverse directories starting at dirPath.
+const scrapeDirectory = (dirPath) => {
+  const files = fs.readdirSync(dirPath);
+  for (const file of files) {
+    const fullPath = path.join(dirPath, file);
+    const stat = fs.statSync(fullPath);
+
+    if (stat.isDirectory()) {
+      if (!isExcluded(fullPath)) {
+        scrapeDirectory(fullPath);
+      }
+    } else if (stat.isFile()) {
+      if (isExcluded(fullPath)) continue;
+      // If maxSize is set, skip file if it exceeds the threshold
+      if (maxSize && stat.size > maxSize) continue;
+
+      if (isTextFile(fullPath)) {
+        // Append a header and the file content to the output file.
+        const relativePath = path.relative(process.cwd(), fullPath);
+        fs.appendFileSync(outputFile, `// ${relativePath}\n`);
+        fs.appendFileSync(outputFile, `// ------------------------------------------------\n`);
+        const content = fs.readFileSync(fullPath, 'utf8');
+        fs.appendFileSync(outputFile, content + "\n\n");
+      }
+    }
+  }
+};
+
+try {
+  // Remove existing output file if it exists.
+  if (fs.existsSync(outputFile)) {
+    fs.unlinkSync(outputFile);
+  }
+  
+  console.log(chalk.blue('Starting repository scraping...'));
+  scrapeDirectory(process.cwd());
+  console.log(chalk.green(`All code has been combined into ${outputFile}`));
+} catch (error) {
+  console.error(chalk.red('An error occurred:'), error);
+}
+2. Making the CLI Installable via npm
+Once you have these files:
+
+Set the executable permission on index.js:
+
+bash
+Copy
+chmod +x index.js
+Install dependencies:
+Run the following command in the project folder:
+
+bash
+Copy
+npm install
+Local Testing:
+You can test the CLI locally by running:
+
+bash
+Copy
+node index.js --help
+or, if you want to simulate a global install:
+
+bash
+Copy
+npm link
+Then run:
+
+bash
+Copy
+repo-scraper --help
+Publishing to npm:
+When you’re ready, publish your CLI to npm:
+
+bash
+Copy
+npm publish
