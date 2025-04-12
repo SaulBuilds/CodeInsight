@@ -263,13 +263,13 @@ export default function DownloadPage() {
             documentation for offline use using VibeInsights AI itself:
           </p>
           
-          <pre><code>vibeinsights generate-docs --type architecture --directory ./my-project --output markdown > architecture.md</code></pre>
+          <pre><code>{`vibeinsights generate-docs --type architecture --directory ./my-project --output markdown > architecture.md`}</code></pre>
           
           <p className="mt-4">
             You can also use the <code>view-doc</code> command to export previously generated documentation:
           </p>
           
-          <pre><code>vibeinsights view-doc 1 --format markdown > document-1.md</code></pre>
+          <pre><code>{`vibeinsights view-doc 1 --format markdown > document-1.md`}</code></pre>
           
           <p className="mt-4 mb-0">
             These commands allow you to create custom documentation specific to your projects.

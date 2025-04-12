@@ -234,7 +234,7 @@ export default function SemanticSearchPage() {
           <p>
             Generate markdown documentation of your search results:
           </p>
-          <pre><code>vibeinsights search "API endpoint implementation patterns" --output markdown > api-patterns.md</code></pre>
+          <pre><code>{`vibeinsights search "API endpoint implementation patterns" --output markdown > api-patterns.md`}</code></pre>
           
           <h3 className="mt-6">Focused Search</h3>
           <p>

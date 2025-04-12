@@ -110,7 +110,7 @@ export default function UserStoriesPage() {
           <p>
             Choose different output formats:
           </p>
-          <pre><code>vibeinsights generate-docs --type user_stories --directory ./src --output markdown > user-stories.md</code></pre>
+          <pre><code>{`vibeinsights generate-docs --type user_stories --directory ./src --output markdown > user-stories.md`}</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             Available formats: terminal (default), markdown, json, html
           </p>

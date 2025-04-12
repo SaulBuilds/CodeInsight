@@ -288,7 +288,7 @@ module.exports = {
           <p className="mt-4">
             After installing this plugin, you could use the new format:
           </p>
-          <pre><code>vibeinsights generate-docs --type architecture --output asciidoc > architecture.adoc</code></pre>
+          <pre><code>{`vibeinsights generate-docs --type architecture --output asciidoc > architecture.adoc`}</code></pre>
         </div>
 
         <div className="mt-8">

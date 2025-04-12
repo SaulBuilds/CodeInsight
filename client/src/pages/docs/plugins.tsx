@@ -270,7 +270,7 @@ export default function PluginsPage() {
           <p>
             With the GraphQL plugin installed:
           </p>
-          <pre><code>vibeinsights graphql-analyze --schema ./schema.graphql --output html > schema-analysis.html</code></pre>
+          <pre><code>{`vibeinsights graphql-analyze --schema ./schema.graphql --output html > schema-analysis.html`}</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This analyzes your GraphQL schema and generates a detailed report.
           </p>

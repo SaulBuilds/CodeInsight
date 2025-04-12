@@ -94,14 +94,14 @@ export default function ReportIssuePage() {
               <p><strong>Steps to Reproduce:</strong></p>
               <ol>
                 <li>Create a TypeScript file with generic interfaces:
-                <pre><code>interface Container&lt;T&gt; {
+                <pre><code>{`interface Container<T> {
   value: T;
   id: string;
 }
 
-interface UserData&lt;U&gt; extends Container&lt;U&gt; {
+interface UserData<U> extends Container<U> {
   username: string;
-}</code></pre>
+}`}</code></pre>
                 </li>
                 <li>Run complexity analysis:
                 <pre><code>vibeinsights complexity --directory ./path/to/file</code></pre>

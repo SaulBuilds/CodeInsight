@@ -11,11 +11,8 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { initMouseTracking, initScrollEffects } from "@/lib/mouseAnimation";
 
-// Import the index page directly
+// Import the index page directly for the root docs path
 import DocsIndex from "@/pages/docs/index";
-import Installation from "@/pages/docs/Installation";
-import QuickStart from "@/pages/docs/QuickStart";
-import GitHub from "@/pages/docs/GitHub";
 
 function Router() {
   // Initialize animation effects
@@ -42,10 +39,7 @@ function Router() {
           
           {/* Documentation Routes */}
           <Route path="/docs" component={DocsIndex} />
-          <Route path="/docs/Installation" component={Installation} />
-          <Route path="/docs/QuickStart" component={QuickStart} />
-          <Route path="/docs/GitHub" component={GitHub} />
-          <Route path="/docs/:rest*" component={Documentation} />
+          <Route path="/docs/:page" component={Documentation} />
           
           <Route path="/cli-reference" component={CliReference} />
           <Route component={NotFound} />
