@@ -182,7 +182,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="codeinsight generate-docs <repository_id> [options]"
+                        code="vibeinsights generate-docs <repository_id> [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -226,7 +226,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="codeinsight generate-docs 1 --type architecture"
+                        code="vibeinsights generate-docs 1 --type architecture"
                       />
                     </CardContent>
                   </Card>
@@ -247,7 +247,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="codeinsight list-repos"
+                        code="vibeinsights list-repos"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
