@@ -39,7 +39,7 @@ export default function CliReference() {
                 Command Line Reference
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-300">
-                Complete reference of RepoScraper CLI commands, options, and examples.
+                Complete reference of CodeInsight AI commands, options, and examples.
               </p>
             </div>
 
@@ -107,7 +107,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper analyze [directory] [options]"
+                        code="codeinsight analyze [directory] [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -161,7 +161,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper analyze ./my-project --output stats.json --exclude dist,build"
+                        code="codeinsight analyze ./my-project --output stats.json --exclude dist,build"
                       />
                     </CardContent>
                   </Card>
@@ -182,7 +182,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper generate-docs <repository_id> [options]"
+                        code="codeinsight generate-docs <repository_id> [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -226,7 +226,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper generate-docs 1 --type architecture"
+                        code="codeinsight generate-docs 1 --type architecture"
                       />
                     </CardContent>
                   </Card>
@@ -247,7 +247,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper list-repos"
+                        code="codeinsight list-repos"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -291,7 +291,7 @@ Analyzed: 4/12/2025, 11:45:12 AM
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper list-docs <repository_id>"
+                        code="codeinsight list-docs <repository_id>"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -315,7 +315,7 @@ Analyzed: 4/12/2025, 11:45:12 AM
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper list-docs 1"
+                        code="codeinsight list-docs 1"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -360,7 +360,7 @@ Created: 4/12/2025, 11:05:45 AM
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="repo-scraper view-doc <document_id> [options]"
+                        code="codeinsight view-doc <document_id> [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -401,10 +401,10 @@ Created: 4/12/2025, 11:05:45 AM
                       <CodeBlock
                         language="bash"
                         code="# View document in terminal
-repo-scraper view-doc 1
+codeinsight view-doc 1
 
 # Save document as markdown file
-repo-scraper view-doc 1 --format markdown"
+codeinsight view-doc 1 --format markdown"
                       />
                     </CardContent>
                   </Card>
@@ -430,10 +430,10 @@ repo-scraper view-doc 1 --format markdown"
                     <CodeBlock
                       language="bash"
                       code="# Analyze repository and save to server
-repo-scraper analyze . --save
+codeinsight analyze . --save
 
 # Generate architectural documentation (assuming repository id is 1)
-repo-scraper generate-docs 1 --type architecture"
+codeinsight generate-docs 1 --type architecture"
                     />
                   </CardContent>
                 </Card>
@@ -449,7 +449,7 @@ repo-scraper generate-docs 1 --type architecture"
                     <CodeBlock
                       language="bash"
                       code="# Generate user stories for repository id 1
-repo-scraper generate-docs 1 --type user_stories"
+codeinsight generate-docs 1 --type user_stories"
                     />
                   </CardContent>
                 </Card>
@@ -465,7 +465,7 @@ repo-scraper generate-docs 1 --type user_stories"
                     <CodeBlock
                       language="bash"
                       code={`# Ask specific questions about the codebase
-repo-scraper generate-docs 1 --type custom --prompt "Identify potential security vulnerabilities in this code and suggest fixes"`}
+codeinsight generate-docs 1 --type custom --prompt "Identify potential security vulnerabilities in this code and suggest fixes"`}
                     />
                   </CardContent>
                 </Card>

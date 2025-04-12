@@ -89,13 +89,13 @@ export default function Home() {
               <span className="text-gray-400 text-sm">Terminal</span>
             </div>
             <div className="p-4 font-mono text-sm text-white overflow-x-auto">
-              $ npm install -g repo-scraper-cli
+              $ npm install -g codeinsight-ai
             </div>
           </div>
           <p className="mt-4 text-center text-gray-600 dark:text-gray-300">
             After installation, you can use the{" "}
             <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-secondary dark:text-blue-400 font-mono">
-              repo-scraper
+              codeinsight
             </code>{" "}
             command globally in your terminal.
           </p>
@@ -116,12 +116,12 @@ export default function Home() {
             Perfect for AI Researchers and Developers
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300 mb-10">
-            RepoScraper CLI streamlines the process of code analysis and documentation,
+            CodeInsight AI streamlines the process of code analysis and documentation,
             allowing researchers to focus on insights rather than data collection.
           </p>
           <Link href="/docs">
             <Button size="lg" className="bg-secondary hover:bg-blue-700 text-white">
-              Start Using RepoScraper
+              Start Using CodeInsight AI
             </Button>
           </Link>
         </div>
