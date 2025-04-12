@@ -150,6 +150,65 @@ async function generateCustomAnalysis(codeContent, customPrompt, apiKey) {
 }
 
 /**
+ * Generate a narrative story that explains complex code structures
+ * @param {string} codeContent - The code content to analyze
+ * @param {string} complexity - The complexity level (simple, moderate, detailed)
+ * @param {string} apiKey - The OpenAI API key
+ * @returns {Promise<string>} - The generated code story
+ */
+async function generateCodeStory(codeContent, complexity = 'moderate', apiKey) {
+  const openai = new OpenAI({ apiKey });
+  const spinner = ora('Generating code story...').start();
+  
+  try {
+    // Customize the prompt based on complexity level
+    let detailLevel = '';
+    switch(complexity) {
+      case 'simple':
+        detailLevel = 'Keep explanations simple and beginner-friendly, focusing on high-level concepts rather than implementation details.';
+        break;
+      case 'moderate':
+        detailLevel = 'Balance technical details with narrative storytelling, making the code approachable to intermediate programmers.';
+        break;
+      case 'detailed':
+        detailLevel = 'Include detailed explanations of algorithms, patterns, and technical concepts, suitable for experienced developers.';
+        break;
+      default:
+        detailLevel = 'Balance technical details with narrative storytelling, making the code approachable to intermediate programmers.';
+        break;
+    }
+
+    const prompt = `
+    Please analyze the following code and create a narrative "Code Story" that explains the complex structures and logic in an engaging, storytelling format.
+    ${detailLevel}
+    
+    Use analogies, metaphors, and storytelling elements to make the code understandable.
+    Focus on the "why" behind design decisions, not just the "what" and "how".
+    Format the output as markdown with proper headings, code blocks for key examples, and narrative sections.
+    
+    Code:
+    ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
+    `;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+      messages: [
+        { role: "system", content: "You are a master programmer and storyteller who excels at explaining complex code through narrative storytelling." },
+        { role: "user", content: prompt }
+      ],
+      max_tokens: 4000,
+    });
+
+    spinner.succeed(chalk.green('Code story generated successfully'));
+    return response.choices[0].message.content || "Failed to generate code story";
+  } catch (error) {
+    spinner.fail(chalk.red('Failed to generate code story'));
+    console.error(chalk.red(`Error: ${error.message}`));
+    throw error;
+  }
+}
+
+/**
  * Get OpenAI API key from environment or user input
  * @param {string} providedKey - The key provided by the user via CLI
  * @returns {string|null} - The API key or null if not found
@@ -163,5 +222,6 @@ module.exports = {
   generateArchitecturalDoc,
   generateUserStories,
   generateCustomAnalysis,
+  generateCodeStory,
   getOpenAIKey
 };

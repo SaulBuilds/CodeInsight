@@ -6,6 +6,12 @@
   "bin": {
     "codeinsight": "./index.js"
   },
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "chmod +x index.js",
+    "publish": "npm publish"
+  },
   "keywords": [
     "cli",
     "codeinsight",
@@ -14,10 +20,16 @@
     "openai",
     "documentation",
     "analysis",
-    "repository"
+    "repository",
+    "code-story",
+    "narrative-code"
   ],
   "author": "CodeInsight AI Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/codeinsight-ai/codeinsight-cli"
+  },
   "dependencies": {
     "chalk": "^4.1.2",
     "commander": "^9.4.0",

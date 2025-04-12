@@ -23,6 +23,7 @@ const {
   generateArchitecturalDoc, 
   generateUserStories, 
   generateCustomAnalysis, 
+  generateCodeStory,
   getOpenAIKey 
 } = require('./openai-utils');
 
@@ -92,7 +93,8 @@ program
 program
   .command('generate-docs <repository_id>')
   .description('Generate documentation from repository code using OpenAI')
-  .option('--type <type>', 'Type of documentation to generate (architecture, user_stories, custom)', 'architecture')
+  .option('--type <type>', 'Type of documentation to generate (architecture, user_stories, code_story, custom)', 'architecture')
+  .option('--complexity <level>', 'Complexity level for code story (simple, moderate, detailed)', 'moderate')
   .option('--prompt <prompt>', 'Custom prompt for documentation generation (required if type=custom)')
   .option('--api-key <key>', 'OpenAI API key (will use OPENAI_API_KEY environment variable if not provided)')
   .action(async (repositoryId, options) => {
@@ -104,10 +106,19 @@ program
       }
 
       // Validate documentation type
-      const validTypes = ['architecture', 'user_stories', 'custom'];
+      const validTypes = ['architecture', 'user_stories', 'code_story', 'custom'];
       if (!validTypes.includes(options.type)) {
         console.error(chalk.red(`Error: Invalid documentation type. Must be one of: ${validTypes.join(', ')}`));
         return;
+      }
+      
+      // Validate complexity level for code_story
+      if (options.type === 'code_story') {
+        const validComplexity = ['simple', 'moderate', 'detailed'];
+        if (!validComplexity.includes(options.complexity)) {
+          console.error(chalk.red(`Error: Invalid complexity level. Must be one of: ${validComplexity.join(', ')}`));
+          return;
+        }
       }
 
       // If type is custom, prompt must be provided
@@ -147,6 +158,8 @@ program
         documentation = await generateArchitecturalDoc(codeContent, apiKey);
       } else if (options.type === 'user_stories') {
         documentation = await generateUserStories(codeContent, apiKey);
+      } else if (options.type === 'code_story') {
+        documentation = await generateCodeStory(codeContent, options.complexity, apiKey);
       } else if (options.type === 'custom') {
         documentation = await generateCustomAnalysis(codeContent, options.prompt, apiKey);
       }
