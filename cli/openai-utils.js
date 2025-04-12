@@ -17,18 +17,20 @@ const chalk = require('chalk');
  */
 async function validateApiKey(apiKey) {
   try {
-    const openai = new OpenAI({ apiKey });
+    const openai = new OpenAI({
+      apiKey: apiKey
+    });
     
     // Make a small request to verify the API key
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.createChatCompletion({
+      model: "gpt-4", 
       messages: [
         { role: "user", content: "This is a test message to verify the API key." }
       ],
       max_tokens: 10,
     });
     
-    return !!response.choices && response.choices.length > 0;
+    return !!response.data.choices && response.data.choices.length > 0;
   } catch (error) {
     return false;
   }
@@ -41,7 +43,9 @@ async function validateApiKey(apiKey) {
  * @returns {Promise<string>} - The generated documentation
  */
 async function generateArchitecturalDoc(codeContent, apiKey) {
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({
+    apiKey: apiKey
+  });
   const spinner = ora('Analyzing codebase architecture...').start();
   
   try {
@@ -53,18 +57,20 @@ async function generateArchitecturalDoc(codeContent, apiKey) {
     Code:
     ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
     `;
+    
+    const systemMessage = "You are an experienced software architect who specializes in creating clear, detailed architectural documentation.";
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
-        { role: "system", content: "You are an experienced software architect who specializes in creating clear, detailed architectural documentation." },
+        { role: "system", content: systemMessage },
         { role: "user", content: prompt }
       ],
       max_tokens: 4000,
     });
 
     spinner.succeed(chalk.green('Architectural documentation generated successfully'));
-    return response.choices[0].message.content || "Failed to generate documentation";
+    return response.data.choices[0].message.content || "Failed to generate documentation";
   } catch (error) {
     spinner.fail(chalk.red('Failed to generate architectural documentation'));
     console.error(chalk.red(`Error: ${error.message}`));
@@ -79,7 +85,9 @@ async function generateArchitecturalDoc(codeContent, apiKey) {
  * @returns {Promise<string>} - The generated user stories
  */
 async function generateUserStories(codeContent, apiKey) {
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({
+    apiKey: apiKey
+  });
   const spinner = ora('Generating user stories...').start();
   
   try {
@@ -91,18 +99,20 @@ async function generateUserStories(codeContent, apiKey) {
     Code:
     ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
     `;
+    
+    const systemMessage = "You are a product manager who specializes in creating detailed user stories from technical implementations.";
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
-        { role: "system", content: "You are a product manager who specializes in creating detailed user stories from technical implementations." },
+        { role: "system", content: systemMessage },
         { role: "user", content: prompt }
       ],
       max_tokens: 4000,
     });
 
     spinner.succeed(chalk.green('User stories generated successfully'));
-    return response.choices[0].message.content || "Failed to generate user stories";
+    return response.data.choices[0].message.content || "Failed to generate user stories";
   } catch (error) {
     spinner.fail(chalk.red('Failed to generate user stories'));
     console.error(chalk.red(`Error: ${error.message}`));
@@ -118,7 +128,9 @@ async function generateUserStories(codeContent, apiKey) {
  * @returns {Promise<string>} - The generated analysis
  */
 async function generateCustomAnalysis(codeContent, customPrompt, apiKey) {
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({
+    apiKey: apiKey
+  });
   const spinner = ora('Generating custom analysis...').start();
   
   try {
@@ -130,18 +142,20 @@ async function generateCustomAnalysis(codeContent, customPrompt, apiKey) {
     Code:
     ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
     `;
+    
+    const systemMessage = "You are an AI assistant specialized in code analysis and documentation generation.";
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
-        { role: "system", content: "You are an AI assistant specialized in code analysis and documentation generation." },
+        { role: "system", content: systemMessage },
         { role: "user", content: prompt }
       ],
       max_tokens: 4000,
     });
 
     spinner.succeed(chalk.green('Custom analysis generated successfully'));
-    return response.choices[0].message.content || "Failed to generate custom analysis";
+    return response.data.choices[0].message.content || "Failed to generate custom analysis";
   } catch (error) {
     spinner.fail(chalk.red('Failed to generate custom analysis'));
     console.error(chalk.red(`Error: ${error.message}`));
@@ -157,7 +171,9 @@ async function generateCustomAnalysis(codeContent, customPrompt, apiKey) {
  * @returns {Promise<string>} - The generated code story
  */
 async function generateCodeStory(codeContent, complexity = 'moderate', apiKey) {
-  const openai = new OpenAI({ apiKey });
+  const openai = new OpenAI({
+    apiKey: apiKey
+  });
   const spinner = ora('Generating code story...').start();
   
   try {
@@ -189,18 +205,20 @@ async function generateCodeStory(codeContent, complexity = 'moderate', apiKey) {
     Code:
     ${codeContent.substring(0, 100000)} // Limit to first ~100K characters to avoid token limits
     `;
+    
+    const systemMessage = "You are a master programmer and storyteller who excels at explaining complex code through narrative storytelling.";
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    const response = await openai.createChatCompletion({
+      model: "gpt-4",
       messages: [
-        { role: "system", content: "You are a master programmer and storyteller who excels at explaining complex code through narrative storytelling." },
+        { role: "system", content: systemMessage },
         { role: "user", content: prompt }
       ],
       max_tokens: 4000,
     });
 
     spinner.succeed(chalk.green('Code story generated successfully'));
-    return response.choices[0].message.content || "Failed to generate code story";
+    return response.data.choices[0].message.content || "Failed to generate code story";
   } catch (error) {
     spinner.fail(chalk.red('Failed to generate code story'));
     console.error(chalk.red(`Error: ${error.message}`));

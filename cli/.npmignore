@@ -1,0 +1,33 @@
+# Development files
+.git
+.github
+.gitignore
+.env
+.env.*
+*.log
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+
+# Build artifacts
+node_modules/
+coverage/
+.nyc_output/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
