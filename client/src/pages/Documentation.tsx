@@ -39,7 +39,7 @@ export default function Documentation() {
             {/* Page header */}
             <div className="mb-10">
               <h1 className="text-3xl font-bold text-text dark:text-white">
-                Introduction to RepoScraper
+                Introduction to CodeInsight AI
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-300">
                 A comprehensive CLI tool for AI researchers that combines repository analysis, 
@@ -67,7 +67,7 @@ export default function Documentation() {
               <p className="text-gray-600 dark:text-gray-300 mb-4">
                 After installation, you can use the{" "}
                 <code className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-secondary dark:text-blue-400 font-mono">
-                  repo-scraper
+                  codeinsight
                 </code>{" "}
                 command globally in your terminal.
               </p>
@@ -78,14 +78,14 @@ export default function Documentation() {
               <h2 className="text-2xl font-bold text-text dark:text-white mb-4">Quick Start</h2>
               
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                RepoScraper provides several commands to extract code, analyze repositories, 
+                CodeInsight AI provides several commands to extract code, analyze repositories, 
                 and generate documentation:
               </p>
               
               <CommandCard
                 title="Extract Code from Repository"
                 icon="code"
-                command="repo-scraper extract --output combined_code.txt --exclude node_modules .git"
+                command="codeinsight extract --output combined_code.txt --exclude node_modules .git"
                 description="This command extracts all code files from the current repository and combines them into a single output file."
                 options={[
                   { name: "--output, -o", description: "Output file name" },
@@ -98,7 +98,7 @@ export default function Documentation() {
               <CommandCard
                 title="Generate Documentation with OpenAI"
                 icon="lightbulb"
-                command="repo-scraper generate-docs --source combined_code.txt --api-key YOUR_OPENAI_API_KEY --output-format md"
+                command="codeinsight generate-docs --source combined_code.txt --api-key YOUR_OPENAI_API_KEY --output-format md"
                 description="This command analyzes the extracted code and generates comprehensive documentation using OpenAI's language models."
                 options={[
                   { name: "--source, -s", description: "Source code file" },
@@ -182,7 +182,7 @@ export default function Documentation() {
                   
                   <ApiOption
                     title="3. Command Line Argument"
-                    code="$ repo-scraper generate-docs --api-key=your_api_key_here"
+                    code="$ codeinsight generate-docs --api-key=your_api_key_here"
                   />
                 </div>
                 
@@ -246,13 +246,13 @@ export default function Documentation() {
               </h2>
               
               <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Besides using the CLI commands, you can also import RepoScraper as a library 
+                Besides using the CLI commands, you can also import CodeInsight AI as a library 
                 in your Node.js projects:
               </p>
               
               <CodeBlock
                 language="javascript"
-                code={`const { scrapeRepository, generateDocs } = require('repo-scraper-cli');
+                code={`const { scrapeRepository, generateDocs } = require('codeinsight-ai');
 
 // Extract code from repository
 const extractedCode = await scrapeRepository({
@@ -287,18 +287,18 @@ console.log(\`Documentation generated: \${documentation.filePath}\`);`}
               <div className="space-y-6">
                 <FaqItem
                   question="How much does it cost to use the OpenAI integration?"
-                  answer="OpenAI API usage is billed based on your OpenAI account pricing. RepoScraper itself is free and open-source, but you'll need to provide your own OpenAI API key and will be responsible for any charges incurred when using the AI documentation features."
+                  answer="OpenAI API usage is billed based on your OpenAI account pricing. CodeInsight AI itself is free and open-source, but you'll need to provide your own OpenAI API key and will be responsible for any charges incurred when using the AI documentation features."
                   isOpen={true}
                 />
                 
                 <FaqItem
                   question="Can I use this tool with private repositories?"
-                  answer="Yes, RepoScraper works with any repository you have access to locally. It operates on your local filesystem and doesn't require any special permissions beyond basic file reading access. This makes it suitable for both public and private repositories."
+                  answer="Yes, CodeInsight AI works with any repository you have access to locally. It operates on your local filesystem and doesn't require any special permissions beyond basic file reading access. This makes it suitable for both public and private repositories."
                 />
                 
                 <FaqItem
                   question="How does the tool handle large repositories?"
-                  answer={`RepoScraper includes several features to handle large repositories effectively:
+                  answer={`CodeInsight AI includes several features to handle large repositories effectively:
                   
 • File size limits can be set to exclude large files
 • Custom exclusion patterns for irrelevant directories

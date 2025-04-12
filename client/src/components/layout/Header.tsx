@@ -15,7 +15,7 @@ export default function Header() {
             <div className="flex-shrink-0">
               <Link href="/">
                 <span className="text-secondary dark:text-blue-400 text-2xl font-bold cursor-pointer">
-                  RepoScraper
+                  CodeInsight AI
                 </span>
               </Link>
             </div>
