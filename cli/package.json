@@ -1,20 +1,21 @@
 {
-  "name": "codeinsight-ai",
+  "name": "vibeinsights-ai",
   "version": "1.0.0",
-  "description": "A comprehensive CLI tool for AI researchers that analyzes repositories, generates documentation, and integrates with OpenAI API",
+  "description": "A sophisticated AI-powered CLI tool that transforms repository analysis and documentation generation for researchers and developers",
   "main": "index.js",
   "bin": {
-    "codeinsight": "./index.js"
+    "vibe": "./index.js"
   },
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "prepare": "chmod +x index.js",
     "publish": "npm publish"
   },
   "keywords": [
     "cli",
-    "codeinsight",
+    "vibeinsights",
+    "vibe",
     "code-analysis",
     "ai",
     "openai",
@@ -24,11 +25,11 @@
     "code-story",
     "narrative-code"
   ],
-  "author": "CodeInsight AI Team",
+  "author": "Vibe Insights Team",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/codeinsight-ai/codeinsight-cli"
+    "url": "https://github.com/SaulBuilds/vibeinsights"
   },
   "dependencies": {
     "chalk": "^4.1.2",
@@ -46,7 +47,21 @@
     "open": "^8.4.2",
     "fs-extra": "^10.1.0",
     "simple-git": "^3.22.0",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "figlet": "^1.6.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mock-fs": "^5.2.0",
+    "mock-stdin": "^1.0.0",
+    "stdout-stderr": "^0.1.13",
+    "execa": "^5.1.1"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/**/*.test.js"],
+    "collectCoverage": true,
+    "coverageDirectory": "coverage"
   },
   "engines": {
     "node": ">=14.0.0"

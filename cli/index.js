@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * CodeInsight AI
- * A comprehensive CLI tool for AI researchers that analyzes repositories, 
- * generates documentation, and integrates with OpenAI API
+ * Vibe Insights AI
+ * A sophisticated AI-powered CLI tool that transforms repository analysis 
+ * and documentation generation for researchers and developers
  */
 
 const fs = require('fs');
@@ -21,6 +21,7 @@ const os = require('os');
 const inquirer = require('inquirer');
 const fsExtra = require('fs-extra');
 const simpleGit = require('simple-git');
+const figlet = require('figlet');
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +41,7 @@ marked.setOptions({
 
 // User home directory for config/data storage
 const USER_HOME = os.homedir();
-const DATA_DIR = path.join(USER_HOME, '.codeinsight');
+const DATA_DIR = path.join(USER_HOME, '.vibeinsights');
 const REPO_DIR = path.join(DATA_DIR, 'repositories');
 const DOCS_DIR = path.join(DATA_DIR, 'documents');
 const TEMP_DIR = path.join(DATA_DIR, 'temp');
@@ -59,21 +60,33 @@ function handleError(error, message = 'An error occurred') {
   process.exit(1);
 }
 
+// Generate ASCII art logo
+function generateLogo() {
+  try {
+    return figlet.textSync('VIBE INSIGHTS', {
+      font: 'Big',
+      horizontalLayout: 'default',
+      verticalLayout: 'default',
+      width: 80,
+      whitespaceBreak: true
+    });
+  } catch (error) {
+    // Fallback if figlet fails
+    return 'VIBE INSIGHTS';
+  }
+}
+
 // Display application header/branding
 function displayHeader() {
-  const headerText = chalk.bold.blue(
-    '╔══════════════════════════════════════════════════╗\n' +
-    '║                 CodeInsight AI                   ║\n' +
-    '╚══════════════════════════════════════════════════╝'
-  );
+  const logoText = chalk.bold.rgb(142, 98, 87)(generateLogo());
   
   const subText = chalk.gray('Repository Analysis & Documentation Tool');
   
-  console.log(boxen(`${headerText}\n${subText}`, {
+  console.log(boxen(`${logoText}\n\n${subText}`, {
     padding: 1,
     margin: 1,
     borderStyle: 'round',
-    borderColor: 'blue'
+    borderColor: 'cyan'
   }));
 }
 
