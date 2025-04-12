@@ -40,7 +40,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-800 text-center text-gray-500 dark:text-gray-400 text-sm">
-          <p>Copyright © {new Date().getFullYear()} RepoScraper. Released under the MIT License.</p>
+          <p>Copyright © {new Date().getFullYear()} CodeInsight AI. Released under the MIT License.</p>
         </div>
       </div>
     </footer>

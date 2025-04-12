@@ -15,21 +15,21 @@ export default function InstallationTabs() {
         <TabsContent value="npm">
           <CodeBlock
             language="bash"
-            code="$ npm install -g repo-scraper-cli"
+            code="$ npm install -g codeinsight-ai"
           />
         </TabsContent>
         
         <TabsContent value="yarn">
           <CodeBlock
             language="bash"
-            code="$ yarn global add repo-scraper-cli"
+            code="$ yarn global add codeinsight-ai"
           />
         </TabsContent>
         
         <TabsContent value="npx">
           <CodeBlock
             language="bash"
-            code="$ npx repo-scraper-cli [command] [options]"
+            code="$ npx codeinsight-ai [command] [options]"
           />
         </TabsContent>
       </Tabs>

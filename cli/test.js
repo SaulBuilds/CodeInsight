@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 /**
- * Test script for repo-scraper-cli
+ * Test script for codeinsight-ai
  * 
- * This script demonstrates how to use the RepoScraper CLI programmatically,
+ * This script demonstrates how to use the CodeInsight AI CLI programmatically,
  * without needing to install it globally.
  */
 
