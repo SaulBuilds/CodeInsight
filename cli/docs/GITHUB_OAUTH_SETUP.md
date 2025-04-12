@@ -18,6 +18,8 @@ export VIBE_DEFAULT_GITHUB_CLIENT_SECRET="your_default_client_secret"
 
 These credentials will be used by default when users run the CLI without specifying custom credentials.
 
+For detailed instructions on setting up these environment variables, see [Setting Up Environment Variables](./SETUP_ENV.md).
+
 ## Authentication Flow Options
 
 The CLI supports two authentication flows:
