@@ -354,9 +354,47 @@ program
   .action(async (directory = '.', options) => {
     try {
       const spinner = ora('Analyzing dependencies...').start();
-      // Dependency analysis will be implemented here
+      
+      const result = await analyzeDependencies({
+        directory: path.resolve(process.cwd(), directory),
+        output: options.output,
+        depth: parseInt(options.depth, 10),
+        filter: options.filter,
+        exclude: options.exclude,
+        highlightCircular: options.highlightCircular,
+        showExternal: options.showExternal
+      });
+      
       spinner.succeed(chalk.green('Dependency analysis completed'));
-      console.log(chalk.yellow('This feature is coming soon!'));
+      
+      // Save the result to a file based on the format
+      const filename = `dependencies.${options.output === 'dot' ? 'dot' : (options.output === 'json' ? 'json' : 'html')}`;
+      fs.writeFileSync(filename, result.result);
+      
+      console.log(boxen(
+        chalk.bold.blue('Dependency Analysis Results\n') +
+        `Files analyzed: ${chalk.cyan(Object.keys(result.dependencies).length)}\n` +
+        `Output format: ${chalk.cyan(options.output)}\n` +
+        `Output file: ${chalk.green(filename)}${options.highlightCircular ? '\n' + 
+        `Circular dependencies: ${chalk.yellow(result.circularDependencies.length)}` : ''}`,
+        { padding: 1, borderColor: 'blue', dimBorder: true }
+      ));
+      
+      // Open in browser if HTML format
+      if (options.output === 'html') {
+        const { openBrowser } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'openBrowser',
+          message: 'Would you like to open the HTML report in your browser?',
+          default: false
+        }]);
+        
+        if (openBrowser) {
+          console.log(chalk.blue('Opening dependency graph in browser...'));
+          // This would typically use a module like 'open' to open the file in a browser
+          console.log(chalk.yellow(`To view the graph, open the file: ${filename}`));
+        }
+      }
     } catch (error) {
       ora().fail(chalk.red('Dependency analysis failed'));
       console.error(chalk.red(`Error: ${error.message}`));
@@ -376,14 +414,92 @@ program
   .action(async (directory = '.', options) => {
     try {
       const spinner = ora('Calculating complexity metrics...').start();
-      // Complexity analysis will be implemented here
+      
+      const result = await analyzeComplexity({
+        directory: path.resolve(process.cwd(), directory),
+        output: options.output,
+        threshold: parseInt(options.threshold, 10),
+        language: options.language,
+        filter: options.filter,
+        exclude: options.exclude,
+        details: options.details
+      });
+      
       spinner.succeed(chalk.green('Complexity analysis completed'));
-      console.log(chalk.yellow('This feature is coming soon!'));
+      
+      // Save the result to a file based on the format
+      const filename = `complexity.${options.output === 'json' ? 'json' : (options.output === 'csv' ? 'csv' : 'html')}`;
+      fs.writeFileSync(filename, result.formattedOutput);
+      
+      // Get summary statistics
+      const { totalFiles, averageComplexity, highComplexityFiles, highComplexityPercentage } = result.summary;
+      
+      // Show results summary
+      console.log(boxen(
+        chalk.bold.blue('Code Complexity Analysis Results\n') +
+        `Files analyzed: ${chalk.cyan(totalFiles)}\n` +
+        `Average complexity: ${chalk.cyan(averageComplexity.toFixed(2))}\n` +
+        `Files with high complexity (>${options.threshold}): ${chalk.yellow(highComplexityFiles)} (${chalk.yellow(highComplexityPercentage.toFixed(1))}%)\n` +
+        `Output format: ${chalk.cyan(options.output)}\n` +
+        `Output file: ${chalk.green(filename)}`,
+        { padding: 1, borderColor: 'blue', dimBorder: true }
+      ));
+      
+      // List top 5 most complex files
+      if (totalFiles > 0) {
+        const topFiles = Object.entries(result.results)
+          .sort((a, b) => b[1].cyclomaticComplexity - a[1].cyclomaticComplexity)
+          .slice(0, 5);
+        
+        if (topFiles.length > 0) {
+          console.log(chalk.bold.blue('\nTop 5 Most Complex Files:'));
+          console.log(chalk.blue('-'.repeat(60)));
+          
+          topFiles.forEach(([file, metrics]) => {
+            console.log(
+              `${chalk.white(file)}\n` +
+              `Cyclomatic Complexity: ${getColorForComplexity(metrics.cyclomaticComplexity, options.threshold)(metrics.cyclomaticComplexity)}\n` +
+              `Lines: ${chalk.white(metrics.nonEmptyLineCount)} (${chalk.white(metrics.sizeCategory)})\n` +
+              chalk.blue('-'.repeat(60))
+            );
+          });
+        }
+      }
+      
+      // Open in browser if HTML format
+      if (options.output === 'html') {
+        const { openBrowser } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'openBrowser',
+          message: 'Would you like to open the HTML report in your browser?',
+          default: false
+        }]);
+        
+        if (openBrowser) {
+          console.log(chalk.blue('Opening complexity report in browser...'));
+          // This would typically use a module like 'open' to open the file in a browser
+          console.log(chalk.yellow(`To view the report, open the file: ${filename}`));
+        }
+      }
     } catch (error) {
       ora().fail(chalk.red('Complexity analysis failed'));
       console.error(chalk.red(`Error: ${error.message}`));
     }
   });
+
+// Helper function for complexity color coding
+function getColorForComplexity(value, threshold) {
+  const highThreshold = threshold;
+  const mediumThreshold = threshold / 2;
+  
+  if (value >= highThreshold) {
+    return chalk.red;
+  } else if (value >= mediumThreshold) {
+    return chalk.yellow;
+  } else {
+    return chalk.green;
+  }
+}
 
 // Configure search command (Natural Language Search)
 program
@@ -392,11 +508,15 @@ program
   .option('-d, --directory <path>', 'Repository directory to search', '.')
   .option('-n, --limit <number>', 'Maximum number of results', '10')
   .option('-c, --context <number>', 'Lines of context to show', '3')
+  .option('-o, --output <format>', 'Output format: text, json, html (default: "text")', 'text')
   .option('--api-key <key>', 'OpenAI API key')
   .option('--no-embeddings', 'Use simple text search instead of embeddings', false)
   .action(async (query, options) => {
     try {
-      // First check if we need to get the API key
+      let searchResult;
+      const directoryPath = path.resolve(process.cwd(), options.directory);
+
+      // First check if we need to get the API key for semantic search
       if (options.embeddings) {
         try {
           const apiKey = await getOpenAIKey(options.apiKey, true);
@@ -406,21 +526,82 @@ program
             return;
           }
           
-          // We'll implement semantic search here using the API key
+          // Perform semantic search with OpenAI embeddings
           const spinner = ora('Performing semantic code search...').start();
-          spinner.succeed(chalk.green('Search completed'));
-          console.log(chalk.yellow('Semantic search feature is coming soon!'));
+          
+          searchResult = await searchCodebase({
+            query,
+            directory: directoryPath,
+            limit: parseInt(options.limit, 10),
+            context: parseInt(options.context, 10),
+            apiKey,
+            useEmbeddings: true
+          });
+          
+          spinner.succeed(chalk.green('Semantic search completed'));
         } catch (error) {
-          ora().fail(chalk.red('Search failed'));
+          ora().fail(chalk.red('Semantic search failed'));
           console.error(chalk.red(`Error: ${error.message}`));
+          
+          // Fall back to simple search
+          console.log(chalk.yellow('Falling back to simple text search...'));
+          
+          const fallbackSpinner = ora(`Searching for "${query}" using simple text search...`).start();
+          
+          searchResult = await searchCodebase({
+            query,
+            directory: directoryPath,
+            limit: parseInt(options.limit, 10),
+            context: parseInt(options.context, 10),
+            useEmbeddings: false
+          });
+          
+          fallbackSpinner.succeed(chalk.green('Simple search completed'));
         }
       } else {
-        // Fallback to simple text search without API
+        // Use simple text search without API
         const spinner = ora(`Searching for "${query}"...`).start();
-        // Simple search implementation will go here
+        
+        searchResult = await searchCodebase({
+          query,
+          directory: directoryPath,
+          limit: parseInt(options.limit, 10),
+          context: parseInt(options.context, 10),
+          useEmbeddings: false
+        });
+        
         spinner.succeed(chalk.green('Search completed'));
-        console.log(chalk.yellow('Simple text search feature is coming soon!'));
       }
+      
+      // Format and display the results
+      const formattedOutput = formatSearchResults(searchResult, options.output);
+      
+      // For non-text formats, save to file
+      if (options.output !== 'text') {
+        const filename = `search_results.${options.output}`;
+        fs.writeFileSync(filename, formattedOutput);
+        console.log(chalk.green(`Search results saved to ${filename}`));
+        
+        // Open in browser if HTML format
+        if (options.output === 'html') {
+          const { openBrowser } = await inquirer.prompt([{
+            type: 'confirm',
+            name: 'openBrowser',
+            message: 'Would you like to open the HTML results in your browser?',
+            default: false
+          }]);
+          
+          if (openBrowser) {
+            console.log(chalk.blue('Opening search results in browser...'));
+            // This would typically use a module like 'open' to open the file in a browser
+            console.log(chalk.yellow(`To view the results, open the file: ${filename}`));
+          }
+        }
+      } else {
+        // Display in terminal for text format
+        console.log(formattedOutput);
+      }
+      
     } catch (error) {
       ora().fail(chalk.red('Search failed'));
       console.error(chalk.red(`Error: ${error.message}`));
@@ -437,9 +618,50 @@ program
   .action(async (directory = '.', options) => {
     try {
       const spinner = ora('Detecting tech stack...').start();
-      // Tech stack detection will be implemented here
+      
+      const result = await detectTechStack({
+        directory: path.resolve(process.cwd(), directory),
+        output: options.output,
+        checkOutdated: options.checkOutdated,
+        recommendations: options.recommendations
+      });
+      
       spinner.succeed(chalk.green('Tech stack detection completed'));
-      console.log(chalk.yellow('This feature is coming soon!'));
+      
+      // Save the result to a file based on the format
+      const filename = `tech_stack.${options.output === 'json' ? 'json' : (options.output === 'html' ? 'html' : 'md')}`;
+      fs.writeFileSync(filename, result.formattedOutput);
+      
+      // Show summary of detected technologies
+      const { languages, frameworks, databases, tools } = result.result;
+      
+      console.log(boxen(
+        chalk.bold.blue('Tech Stack Detection Results\n') +
+        `Languages: ${chalk.cyan(Object.keys(languages).length > 0 ? Object.keys(languages).join(', ') : 'None detected')}\n` +
+        `Frameworks: ${chalk.cyan(Object.keys(frameworks).length > 0 ? Object.keys(frameworks).join(', ') : 'None detected')}\n` +
+        `Databases: ${chalk.cyan(Object.keys(databases).length > 0 ? Object.keys(databases).join(', ') : 'None detected')}\n` +
+        `Tools: ${chalk.cyan(Object.keys(tools).length > 0 ? Object.keys(tools).join(', ') : 'None detected')}\n` +
+        `${options.checkOutdated ? `Outdated Dependencies: ${chalk.yellow(Object.keys(result.result.outdatedDependencies).length)}\n` : ''}` +
+        `${options.recommendations ? `Recommendations: ${chalk.yellow(Object.keys(result.result.recommendations).length)}\n` : ''}` +
+        `Output file: ${chalk.green(filename)}`,
+        { padding: 1, borderColor: 'blue', dimBorder: true }
+      ));
+      
+      // Open in browser if HTML format
+      if (options.output === 'html') {
+        const { openBrowser } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'openBrowser',
+          message: 'Would you like to open the HTML report in your browser?',
+          default: false
+        }]);
+        
+        if (openBrowser) {
+          console.log(chalk.blue('Opening tech stack report in browser...'));
+          // This would typically use a module like 'open' to open the file in a browser
+          console.log(chalk.yellow(`To view the report, open the file: ${filename}`));
+        }
+      }
     } catch (error) {
       ora().fail(chalk.red('Tech stack detection failed'));
       console.error(chalk.red(`Error: ${error.message}`));
