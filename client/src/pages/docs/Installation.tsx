@@ -4,12 +4,12 @@ export default function InstallationPage() {
   return (
     <DocLayout
       title="Installation"
-      description="Get started with CodeInsight AI by installing it on your system"
+      description="Get started with VibeInsights AI by installing it on your system"
     >
       <div className="prose dark:prose-invert max-w-none">
         <h2 id="requirements">System Requirements</h2>
         <p>
-          Before installing CodeInsight AI, ensure your system meets the following requirements:
+          Before installing VibeInsights AI, ensure your system meets the following requirements:
         </p>
         <ul>
           <li>Node.js version 14.0.0 or higher</li>
@@ -20,28 +20,28 @@ export default function InstallationPage() {
         <div className="mt-8">
           <h2 id="npm-installation">Installation via npm</h2>
           <p>
-            The recommended way to install CodeInsight AI is through npm. This will install the CLI tool globally on your system, making it available from any terminal.
+            The recommended way to install VibeInsights AI is through npm. This will install the CLI tool globally on your system, making it available from any terminal.
           </p>
-          <pre><code>npm install -g codeinsight-ai</code></pre>
+          <pre><code>npm install -g vibeinsights-ai</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
-            This will install the latest stable version of CodeInsight AI and make it available as a global command.
+            This will install the latest stable version of VibeInsights AI and make it available as a global command.
           </p>
         </div>
 
         <div className="mt-8">
           <h2 id="yarn-installation">Installation via yarn</h2>
           <p>
-            If you prefer using yarn, you can install CodeInsight AI with the following command:
+            If you prefer using yarn, you can install VibeInsights AI with the following command:
           </p>
-          <pre><code>yarn global add codeinsight-ai</code></pre>
+          <pre><code>yarn global add vibeinsights-ai</code></pre>
         </div>
 
         <div className="mt-8">
           <h2 id="direct-usage">Using without Installation</h2>
           <p>
-            If you prefer not to install the package globally, you can use npx to run CodeInsight AI directly:
+            If you prefer not to install the package globally, you can use npx to run VibeInsights AI directly:
           </p>
-          <pre><code>npx codeinsight-ai [command] [options]</code></pre>
+          <pre><code>npx vibeinsights-ai [command] [options]</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This will download and execute the latest version of CodeInsight AI for the current session only.
           </p>
