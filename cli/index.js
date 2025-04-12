@@ -148,50 +148,50 @@ program
         }
         validatingSpinner.succeed(chalk.green('OpenAI API key is valid'));
 
-      // Get repository code
-      const codeSpinner = ora('Retrieving repository code...').start();
-      const codeContent = await getRepositoryCode(repositoryId);
-      if (!codeContent) {
-        codeSpinner.fail(chalk.red(`Repository with ID ${repositoryId} not found`));
-        return;
-      }
-      codeSpinner.succeed(chalk.green('Repository code retrieved successfully'));
+        // Get repository code
+        const codeSpinner = ora('Retrieving repository code...').start();
+        const codeContent = await getRepositoryCode(repositoryId);
+        if (!codeContent) {
+          codeSpinner.fail(chalk.red(`Repository with ID ${repositoryId} not found`));
+          return;
+        }
+        codeSpinner.succeed(chalk.green('Repository code retrieved successfully'));
 
-      // Generate documentation based on type
-      let documentation;
-      if (options.type === 'architecture') {
-        documentation = await generateArchitecturalDoc(codeContent, apiKey);
-      } else if (options.type === 'user_stories') {
-        documentation = await generateUserStories(codeContent, apiKey);
-      } else if (options.type === 'code_story') {
-        documentation = await generateCodeStory(codeContent, options.complexity, apiKey);
-      } else if (options.type === 'custom') {
-        documentation = await generateCustomAnalysis(codeContent, options.prompt, apiKey);
-      }
+        // Generate documentation based on type
+        let documentation;
+        if (options.type === 'architecture') {
+          documentation = await generateArchitecturalDoc(codeContent, apiKey);
+        } else if (options.type === 'user_stories') {
+          documentation = await generateUserStories(codeContent, apiKey);
+        } else if (options.type === 'code_story') {
+          documentation = await generateCodeStory(codeContent, options.complexity, apiKey);
+        } else if (options.type === 'custom') {
+          documentation = await generateCustomAnalysis(codeContent, options.prompt, apiKey);
+        }
 
-      // Save documentation to file
-      const filename = `${options.type}_doc_${repositoryId}.md`;
-      fs.writeFileSync(filename, documentation);
-      
-      console.log(boxen(
-        chalk.bold.blue('Documentation Generated\n') +
-        `Type: ${chalk.cyan(options.type)}\n` +
-        `Output file: ${chalk.green(filename)}\n\n` +
-        chalk.dim('Preview (first 500 characters):\n') +
-        chalk.white(documentation.substring(0, 500) + '...'),
-        { padding: 1, borderColor: 'blue', dimBorder: true }
-      ));
+        // Save documentation to file
+        const filename = `${options.type}_doc_${repositoryId}.md`;
+        fs.writeFileSync(filename, documentation);
+        
+        console.log(boxen(
+          chalk.bold.blue('Documentation Generated\n') +
+          `Type: ${chalk.cyan(options.type)}\n` +
+          `Output file: ${chalk.green(filename)}\n\n` +
+          chalk.dim('Preview (first 500 characters):\n') +
+          chalk.white(documentation.substring(0, 500) + '...'),
+          { padding: 1, borderColor: 'blue', dimBorder: true }
+        ));
 
-      const { viewFull } = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'viewFull',
-        message: 'Would you like to view the full documentation?',
-        default: false
-      }]);
+        const { viewFull } = await inquirer.prompt([{
+          type: 'confirm',
+          name: 'viewFull',
+          message: 'Would you like to view the full documentation?',
+          default: false
+        }]);
 
-      if (viewFull) {
-        console.log('\n' + marked(documentation));
-      }
+        if (viewFull) {
+          console.log('\n' + marked(documentation));
+        }
 
     } catch (error) {
       ora().fail(chalk.red('Documentation generation failed'));
