@@ -4,90 +4,85 @@ A comprehensive CLI tool for AI researchers that analyzes repositories, generate
 
 ## Features
 
-- **Repository Analysis**: Scan and extract code from repositories with customizable filters
-- **OpenAI Integration**: Generate AI-powered documentation using GPT-4o
-- **Multiple Documentation Types**:
-  - Architectural Overview
-  - User Stories
-  - Custom Analysis (using your own prompts)
-- **Interactive Terminal UI**: Colorful and informative command-line interface
-- **Markdown Export**: Export documentation to markdown files
+- **Repository Analysis**: Extract and analyze code from a directory
+- **OpenAI Integration**: Generate AI-powered documentation about repository architecture
+- **Multiple Documentation Types**: Generate architecture docs, user stories, or custom analysis
+- **Markdown Output**: All documentation is generated in markdown format for easy viewing and sharing
+- **Terminal Rendering**: View documentation directly in your terminal with proper formatting
 
 ## Installation
+
+### Global Installation
 
 ```bash
 npm install -g repo-scraper-cli
 ```
 
-## Usage
-
-### Analyze a Repository
+### Local Installation
 
 ```bash
-repo-scraper analyze [directory] [options]
+npm install repo-scraper-cli
+```
+
+## Usage
+
+### Analyze Repository
+
+Extract and analyze code from a repository:
+
+```bash
+repo-scraper analyze [directory] --output analysis.md --exclude dist,build
 ```
 
 Options:
-- `-o, --output <filename>` - Output file name (default: "repo_analysis.txt")
-- `-x, --exclude <patterns>` - Patterns to exclude (e.g., "node_modules dist")
-- `-s, --max-size <size>` - Maximum file size in bytes to include
-- `--save` - Save analysis to the server for future reference
+- `--output, -o`: Output file name (default: "repo_analysis.txt")
+- `--exclude, -x`: Additional exclusion pattern(s) (e.g., "dist,build")
+- `--max-size, -s`: Maximum file size in bytes to include
+- `--save`: Save analysis to server for future reference
 
 ### Generate Documentation
 
+Generate documentation from repository code using OpenAI:
+
 ```bash
-repo-scraper generate-docs <repository_id> [options]
+repo-scraper generate-docs <repository_id> --type architecture
 ```
 
 Options:
-- `--type <type>` - Type of documentation to generate (architecture, user_stories, custom)
-- `--prompt <prompt>` - Custom prompt for documentation generation
-- `--api-key <key>` - OpenAI API key (optional, will use environment variable if not provided)
+- `--type`: Type of documentation to generate (architecture, user_stories, custom)
+- `--prompt`: Custom prompt for documentation generation (required if type=custom)
+- `--api-key`: OpenAI API key (will use OPENAI_API_KEY environment variable if not provided)
 
 ### List Repositories
+
+List all analyzed repositories:
 
 ```bash
 repo-scraper list-repos
 ```
 
-### List Documentation for a Repository
+### List Documentation
+
+List all documentation generated for a repository:
 
 ```bash
 repo-scraper list-docs <repository_id>
 ```
 
-### View a Document
+### View Document
+
+View a specific document in the terminal or save as markdown:
 
 ```bash
-repo-scraper view-doc <document_id> [options]
+repo-scraper view-doc <document_id> --format terminal
 ```
 
 Options:
-- `--format <format>` - Output format (terminal, markdown)
-
-### Verify OpenAI API Key
-
-```bash
-repo-scraper verify-key <api_key>
-```
+- `--format`: Output format: "terminal" or "markdown" (default: "terminal")
 
 ## Environment Variables
 
-- `API_URL` - Base URL for API calls (default: "http://localhost:5000/api")
-- `OPENAI_API_KEY` - Your OpenAI API key
-
-## Example
-
-```bash
-# Analyze the current directory
-repo-scraper analyze .
-
-# Generate architectural documentation
-repo-scraper generate-docs 1 --type architecture
-
-# View a document in the terminal
-repo-scraper view-doc 1
-```
+- `OPENAI_API_KEY`: Your OpenAI API key
 
 ## License
 
