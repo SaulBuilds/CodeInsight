@@ -54,7 +54,7 @@ export default function Header() {
               <div className="flex-shrink-0">
                 <Link href="/">
                   <span className="text-primary text-2xl font-serif font-bold cursor-pointer">
-                    CodeInsight <span className="text-secondary">AI</span>
+                    VibeInsights <span className="text-secondary">AI</span>
                   </span>
                 </Link>
               </div>

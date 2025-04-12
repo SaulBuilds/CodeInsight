@@ -25,7 +25,7 @@ export default function DocPlaceholder({ title, description }: DocPlaceholderPro
               <li>Comprehensive guide on how to use this feature</li>
               <li>Step-by-step instructions with examples</li>
               <li>Best practices and troubleshooting tips</li>
-              <li>Integration with other CodeInsight AI features</li>
+              <li>Integration with other VibeInsights AI features</li>
             </ul>
           </div>
           
@@ -34,7 +34,7 @@ export default function DocPlaceholder({ title, description }: DocPlaceholderPro
               In the meantime, you can explore the CLI command directly by running:
             </p>
             <pre className="bg-muted p-4 rounded-md mt-2 overflow-x-auto">
-              <code>codeinsight --help</code>
+              <code>vibeinsights --help</code>
             </pre>
           </div>
         </div>

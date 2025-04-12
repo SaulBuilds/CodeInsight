@@ -1,81 +1,122 @@
-import { Link } from "wouter";
-import InstallationTabs from "@/components/docs/InstallationTabs";
-import { Button } from "@/components/ui/button";
 import DocLayout from "@/components/layout/DocLayout";
 
 export default function InstallationPage() {
   return (
-    <DocLayout title="Installation" description="Installation and setup instructions for CodeInsight AI">
-      <div className="glass-card p-8 rounded-xl mb-10">
-        <h2 className="text-2xl font-bold text-foreground mb-6 relative inline-block">
-          <span className="relative z-10">Installation Options</span>
-          <span className="absolute -bottom-1 left-0 w-full h-3 bg-primary/20 rounded-lg"></span>
-        </h2>
-        
-        <InstallationTabs />
-        
-        <p className="text-foreground/80 mt-6">
-          After installation, you can use the{" "}
-          <code className="font-mono px-2 py-1 rounded bg-muted text-primary">
-            codeinsight
-          </code>{" "}
-          command globally in your terminal.
+    <DocLayout
+      title="Installation"
+      description="Get started with CodeInsight AI by installing it on your system"
+    >
+      <div className="prose dark:prose-invert max-w-none">
+        <h2 id="requirements">System Requirements</h2>
+        <p>
+          Before installing CodeInsight AI, ensure your system meets the following requirements:
         </p>
-      </div>
-      
-      <div className="glass-card p-8 rounded-xl mb-10">
-        <h2 className="text-2xl font-bold text-foreground mb-6 relative inline-block">
-          <span className="relative z-10">System Requirements</span>
-          <span className="absolute -bottom-1 left-0 w-full h-3 bg-primary/20 rounded-lg"></span>
-        </h2>
-        
-        <ul className="list-disc pl-6 space-y-2 text-foreground/80">
-          <li>Node.js 16 or higher</li>
-          <li>npm 7 or higher (comes with Node.js)</li>
-          <li>Git (for repository analysis features)</li>
+        <ul>
+          <li>Node.js version 14.0.0 or higher</li>
+          <li>npm or yarn package manager</li>
+          <li>Git (required for repository operations)</li>
         </ul>
-        
-        <div className="mt-8 bg-muted/50 p-6 rounded-lg border border-border/50">
-          <p className="text-foreground/80 font-medium font-serif mb-2">
-            Optional Dependencies
+
+        <div className="mt-8">
+          <h2 id="npm-installation">Installation via npm</h2>
+          <p>
+            The recommended way to install CodeInsight AI is through npm. This will install the CLI tool globally on your system, making it available from any terminal.
           </p>
-          <p className="text-foreground/70">
-            For full functionality with AI-powered features, you'll need an OpenAI API key. 
-            This is required for documentation generation and code story features.
+          <pre><code>npm install -g codeinsight-ai</code></pre>
+          <p className="text-sm text-muted-foreground mt-2">
+            This will install the latest stable version of CodeInsight AI and make it available as a global command.
           </p>
         </div>
-      </div>
-      
-      <div className="glass-card p-8 rounded-xl">
-        <h2 className="text-2xl font-bold text-foreground mb-6 relative inline-block">
-          <span className="relative z-10">Verifying Installation</span>
-          <span className="absolute -bottom-1 left-0 w-full h-3 bg-primary/20 rounded-lg"></span>
-        </h2>
-        
-        <p className="text-foreground/80 mb-4">
-          After installation, you can verify that CodeInsight AI is correctly installed by running:
-        </p>
-        
-        <div className="bg-card/50 backdrop-blur-md rounded-xl overflow-hidden shadow-sm border border-border/50">
-          <div className="flex items-center justify-between px-4 py-3 bg-muted/80">
-            <div className="flex space-x-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-            </div>
-            <span className="text-foreground/70 text-sm font-medium">Terminal</span>
-          </div>
-          <div className="p-6 font-mono text-lg text-foreground overflow-x-auto">
-            <span className="text-secondary">$</span> codeinsight --version
-          </div>
+
+        <div className="mt-8">
+          <h2 id="yarn-installation">Installation via yarn</h2>
+          <p>
+            If you prefer using yarn, you can install CodeInsight AI with the following command:
+          </p>
+          <pre><code>yarn global add codeinsight-ai</code></pre>
         </div>
-        
-        <div className="mt-8 flex justify-center">
-          <Link href="/docs/quick-start">
-            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl shadow-md">
-              <i className="fas fa-arrow-right mr-2"></i> Quick Start Guide
-            </Button>
-          </Link>
+
+        <div className="mt-8">
+          <h2 id="direct-usage">Using without Installation</h2>
+          <p>
+            If you prefer not to install the package globally, you can use npx to run CodeInsight AI directly:
+          </p>
+          <pre><code>npx codeinsight-ai [command] [options]</code></pre>
+          <p className="text-sm text-muted-foreground mt-2">
+            This will download and execute the latest version of CodeInsight AI for the current session only.
+          </p>
+        </div>
+
+        <div className="mt-8">
+          <h2 id="verify-installation">Verifying Installation</h2>
+          <p>
+            To verify that CodeInsight AI has been installed correctly, run the following command:
+          </p>
+          <pre><code>codeinsight --version</code></pre>
+          <p>
+            This should display the current version of CodeInsight AI. You can also check the available commands by running:
+          </p>
+          <pre><code>codeinsight --help</code></pre>
+        </div>
+
+        <div className="mt-8 p-6 bg-primary/5 rounded-lg">
+          <h2 id="api-keys" className="mt-0">Setting Up API Keys</h2>
+          <p>
+            CodeInsight AI integrates with OpenAI's API for generating documentation and performing semantic search. You'll need to provide your OpenAI API key to use these features.
+          </p>
+          <h3>Option 1: Environment Variables</h3>
+          <p>
+            Set the <code>OPENAI_API_KEY</code> environment variable in your shell:
+          </p>
+          <pre><code># On Unix/Linux/macOS
+export OPENAI_API_KEY="your-api-key"
+
+# On Windows (CMD)
+set OPENAI_API_KEY=your-api-key
+
+# On Windows (PowerShell)
+$env:OPENAI_API_KEY="your-api-key"</code></pre>
+
+          <h3>Option 2: Command Line Argument</h3>
+          <p>
+            Provide the API key directly with the <code>--api-key</code> option when running commands that require it:
+          </p>
+          <pre><code>codeinsight generate-docs --api-key="your-api-key" ...</code></pre>
+
+          <h3>Option 3: Interactive Prompt</h3>
+          <p>
+            If you don't provide an API key, CodeInsight AI will prompt you to enter it when needed.
+          </p>
+        </div>
+
+        <div className="mt-8">
+          <h2 id="github-oauth">GitHub OAuth Setup (Optional)</h2>
+          <p>
+            To use the GitHub integration features, you need to set up GitHub OAuth credentials:
+          </p>
+          <ol>
+            <li>Create a GitHub OAuth app at <a href="https://github.com/settings/developers" target="_blank" rel="noreferrer">https://github.com/settings/developers</a></li>
+            <li>Set the callback URL to <code>http://localhost:3000/callback</code></li>
+            <li>Set the <code>GITHUB_CLIENT_ID</code> and <code>GITHUB_CLIENT_SECRET</code> environment variables with the credentials from your OAuth app</li>
+          </ol>
+        </div>
+
+        <div className="mt-8 p-4 border border-yellow-500/30 bg-yellow-500/5 rounded-lg">
+          <h3 className="text-yellow-500 font-medium mt-0">Troubleshooting Installation</h3>
+          <p className="mb-2">If you encounter any issues during installation:</p>
+          <ul className="mt-0">
+            <li>Make sure your Node.js version is 14.0.0 or higher (<code>node --version</code>)</li>
+            <li>Try installing with the <code>--force</code> flag: <code>npm install -g codeinsight-ai --force</code></li>
+            <li>If you get permission errors, you might need to use <code>sudo</code> on Unix-based systems or run your terminal as Administrator on Windows</li>
+            <li>Clear npm cache with <code>npm cache clean --force</code> and try installing again</li>
+          </ul>
+        </div>
+
+        <div className="mt-8">
+          <h2 id="next-steps">Next Steps</h2>
+          <p>
+            Now that you have CodeInsight AI installed, head over to the <a href="/docs/quick-start">Quick Start Guide</a> to learn how to use the tool and explore its features.
+          </p>
         </div>
       </div>
     </DocLayout>

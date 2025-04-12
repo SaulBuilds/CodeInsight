@@ -7,11 +7,11 @@ export default function DocsIndex() {
   return (
     <DocLayout 
       title="Documentation" 
-      description="Welcome to the CodeInsight AI documentation - learn how to analyze repositories and generate comprehensive documentation."
+      description="Welcome to the VibeInsights AI documentation - learn how to analyze repositories and generate comprehensive documentation."
     >
       <section className="mb-12">
         <p className="text-lg text-foreground/80 mb-6">
-          CodeInsight AI is a comprehensive command-line tool designed for AI researchers and developers.
+          VibeInsights AI is a comprehensive command-line tool designed for AI researchers and developers.
           It helps you analyze codebases, extract insights, and generate high-quality documentation.
         </p>
         
@@ -21,7 +21,7 @@ export default function DocsIndex() {
               <FeatureCard
                 icon="download"
                 title="Installation"
-                description="Install CodeInsight AI quickly and get started with repository analysis."
+                description="Install VibeInsights AI quickly and get started with repository analysis."
                 className="transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 h-full"
               />
             </div>
@@ -32,7 +32,7 @@ export default function DocsIndex() {
               <FeatureCard
                 icon="play"
                 title="Quick Start"
-                description="Learn the basic commands and typical workflow with CodeInsight AI."
+                description="Learn the basic commands and typical workflow with VibeInsights AI."
                 className="transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 h-full"
               />
             </div>
@@ -45,7 +45,7 @@ export default function DocsIndex() {
         <div className="animated-blob blob-2" style={{ opacity: 0.1 }}></div>
         
         <div className="relative z-10">
-          <h2 className="text-2xl font-bold text-foreground mb-6 relative inline-block">
+          <h2 className="text-2xl font-serif font-bold text-foreground mb-6 relative inline-block">
             <span className="relative z-10">Key Features</span>
             <span className="absolute -bottom-1 left-0 w-full h-3 bg-primary/20 rounded-lg"></span>
           </h2>
@@ -132,7 +132,7 @@ export default function DocsIndex() {
       </section>
       
       <section className="glass-card p-8 rounded-xl">
-        <h2 className="text-2xl font-bold text-foreground mb-6 relative inline-block">
+        <h2 className="text-2xl font-serif font-bold text-foreground mb-6 relative inline-block">
           <span className="relative z-10">Resources</span>
           <span className="absolute -bottom-1 left-0 w-full h-3 bg-primary/20 rounded-lg"></span>
         </h2>
@@ -148,7 +148,7 @@ export default function DocsIndex() {
             </div>
           </Link>
           
-          <a href="https://github.com/SaulBuilds/CodeInsight" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/saulbuilds/vibeinsights" target="_blank" rel="noopener noreferrer">
             <div className="cursor-pointer">
               <div className="border border-border/50 rounded-xl p-6 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-md flex flex-col items-center text-center">
                 <i className="fab fa-github text-3xl text-primary mb-4"></i>
@@ -158,7 +158,7 @@ export default function DocsIndex() {
             </div>
           </a>
           
-          <a href="https://www.npmjs.com/package/codeinsight-ai" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.npmjs.com/package/vibeinsights-ai" target="_blank" rel="noopener noreferrer">
             <div className="cursor-pointer">
               <div className="border border-border/50 rounded-xl p-6 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-md flex flex-col items-center text-center">
                 <i className="fab fa-npm text-3xl text-primary mb-4"></i>
