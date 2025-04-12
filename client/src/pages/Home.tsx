@@ -9,7 +9,7 @@ export default function Home() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-text dark:text-white">
-            RepoScraper <span className="text-secondary dark:text-blue-400">CLI</span>
+            CodeInsight <span className="text-secondary dark:text-blue-400">AI</span>
           </h1>
           <p className="mt-6 text-xl max-w-3xl mx-auto text-gray-600 dark:text-gray-300">
             A comprehensive CLI tool for AI researchers that combines repository analysis,

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * repo-scraper-cli
+ * CodeInsight AI
  * A comprehensive CLI tool for AI researchers that analyzes repositories, 
  * generates documentation, and integrates with OpenAI API
  */
@@ -203,7 +203,7 @@ program
       spinner.succeed(chalk.green('Repositories retrieved successfully'));
       
       if (repositories.length === 0) {
-        console.log(chalk.yellow('No repositories found. Use "repo-scraper analyze" to analyze a repository.'));
+        console.log(chalk.yellow('No repositories found. Use "codeinsight analyze" to analyze a repository.'));
         return;
       }
 
@@ -259,7 +259,7 @@ program
       spinner.succeed(chalk.green('Documentation retrieved successfully'));
       
       if (documents.length === 0) {
-        console.log(chalk.yellow(`No documentation found for repository ${repositoryId}. Use "repo-scraper generate-docs ${repositoryId}" to generate documentation.`));
+        console.log(chalk.yellow(`No documentation found for repository ${repositoryId}. Use "codeinsight generate-docs ${repositoryId}" to generate documentation.`));
         return;
       }
 

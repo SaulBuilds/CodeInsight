@@ -1,5 +1,5 @@
 /**
- * RepoScraper CLI - OpenAI Utilities
+ * CodeInsight AI - OpenAI Utilities
  * 
  * This file contains utilities for interacting with the OpenAI API
  */
