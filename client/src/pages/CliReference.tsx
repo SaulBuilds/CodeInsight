@@ -39,7 +39,7 @@ export default function CliReference() {
                 Command Line Reference
               </h1>
               <p className="mt-2 text-gray-600 dark:text-gray-300">
-                Complete reference of CodeInsight AI commands, options, and examples.
+                Complete reference of VibeInsights AI commands, options, and examples.
               </p>
             </div>
 
@@ -107,7 +107,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="codeinsight analyze [directory] [options]"
+                        code="vibeinsights analyze [directory] [options]"
                       />
                       
                       <h4 className="font-medium text-text dark:text-white mt-6 mb-2">
@@ -161,7 +161,7 @@ export default function CliReference() {
                       </h4>
                       <CodeBlock
                         language="bash"
-                        code="codeinsight analyze ./my-project --output stats.json --exclude dist,build"
+                        code="vibeinsights analyze ./my-project --output stats.json --exclude dist,build"
                       />
                     </CardContent>
                   </Card>
