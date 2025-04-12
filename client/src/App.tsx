@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -8,8 +9,24 @@ import Documentation from "@/pages/Documentation";
 import CliReference from "@/pages/CliReference";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
+import { initMouseTracking, initScrollEffects } from "@/lib/mouseAnimation";
 
 function Router() {
+  // Initialize animation effects
+  useEffect(() => {
+    // Setup mouse tracking for parallax effects
+    const cleanupMouseTracking = initMouseTracking();
+    
+    // Setup scroll-based animations
+    const cleanupScrollEffects = initScrollEffects();
+    
+    // Cleanup on unmount
+    return () => {
+      if (cleanupMouseTracking) cleanupMouseTracking();
+      if (cleanupScrollEffects) cleanupScrollEffects();
+    };
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
