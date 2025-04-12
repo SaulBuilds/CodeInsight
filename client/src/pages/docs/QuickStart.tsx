@@ -78,34 +78,34 @@ export default function QuickStartPage() {
         <div className="mt-10">
           <h2 id="typical-workflow">Typical Workflow</h2>
           <p>
-            Here's a common workflow for using CodeInsight AI:
+            Here's a common workflow for using VibeInsights AI:
           </p>
 
           <ol className="mt-4">
             <li>
               <strong>Connect to GitHub (optional):</strong>
-              <pre><code>codeinsight github</code></pre>
+              <pre><code>vibeinsights github</code></pre>
               <p>Follow the interactive prompts to select and clone a repository.</p>
             </li>
             <li>
               <strong>Alternatively, analyze a local repository:</strong>
-              <pre><code>codeinsight extract --directory ./path/to/local/repo</code></pre>
+              <pre><code>vibeinsights extract --directory ./path/to/local/repo</code></pre>
             </li>
             <li>
               <strong>Generate architectural documentation:</strong>
-              <pre><code>codeinsight generate-docs --type architecture --directory ./path/to/repo</code></pre>
+              <pre><code>vibeinsights generate-docs --type architecture --directory ./path/to/repo</code></pre>
             </li>
             <li>
               <strong>Analyze dependencies to understand the codebase structure:</strong>
-              <pre><code>codeinsight analyze-deps --directory ./path/to/repo --output html</code></pre>
+              <pre><code>vibeinsights analyze-deps --directory ./path/to/repo --output html</code></pre>
             </li>
             <li>
               <strong>Identify complex areas that might need refactoring:</strong>
-              <pre><code>codeinsight complexity --directory ./path/to/repo --threshold 15</code></pre>
+              <pre><code>vibeinsights complexity --directory ./path/to/repo --threshold 15</code></pre>
             </li>
             <li>
               <strong>Generate code stories for complex portions:</strong>
-              <pre><code>codeinsight generate-docs --type code-story --source complex-file.js</code></pre>
+              <pre><code>vibeinsights generate-docs --type code-story --source complex-file.js</code></pre>
             </li>
           </ol>
         </div>
@@ -113,7 +113,7 @@ export default function QuickStartPage() {
         <div className="mt-10 p-6 bg-primary/5 rounded-lg">
           <h2 id="options" className="mt-0">Common Options</h2>
           <p>
-            Most CodeInsight AI commands support these options:
+            Most VibeInsights AI commands support these options:
           </p>
 
           <table className="w-full">
