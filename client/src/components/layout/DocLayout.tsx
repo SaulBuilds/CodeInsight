@@ -68,7 +68,7 @@ export default function DocLayout({ children, title, description }: DocLayoutPro
                 <div className="animated-blob blob-1" style={{ opacity: 0.1 }}></div>
                 
                 <div className="relative z-10">
-                  <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+                  <h1 className="text-3xl md:text-4xl font-serif font-bold text-foreground mb-4">
                     {title}
                   </h1>
                   {description && (

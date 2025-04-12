@@ -53,7 +53,7 @@ export default function Header() {
             <div className="flex items-center">
               <div className="flex-shrink-0">
                 <Link href="/">
-                  <span className="text-primary text-2xl font-bold cursor-pointer">
+                  <span className="text-primary text-2xl font-serif font-bold cursor-pointer">
                     CodeInsight <span className="text-secondary">AI</span>
                   </span>
                 </Link>
@@ -90,12 +90,12 @@ export default function Header() {
                   </a>
                 </Link>
                 <a 
-                  href="https://github.com" 
+                  href="https://github.com/saulbuilds/vibeinsights" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-foreground/80 hover:text-primary px-3 py-2 text-sm font-medium transition-colors"
                 >
-                  GitHub
+                  <i className="fab fa-github mr-1"></i>
                 </a>
               </nav>
             </div>
@@ -163,13 +163,13 @@ export default function Header() {
             </a>
           </Link>
           <a 
-            href="https://github.com" 
+            href="https://github.com/saulbuilds/vibeinsights" 
             target="_blank" 
             rel="noopener noreferrer"
             className="overlay-menu-item text-foreground hover:text-primary transition-colors"
             onClick={closeMenu}
           >
-            GitHub
+            <i className="fab fa-github mr-2"></i> GitHub
           </a>
         </nav>
         
