@@ -117,7 +117,7 @@ export default function CodeStoryPage() {
               <p>
                 Generate initial drafts of technical documentation that developers can review and refine.
               </p>
-              <pre><code>vibeinsights generate-docs --type code_story --directory ./src/api --output markdown > api-documentation.md</code></pre>
+              <pre><code>vibeinsights generate-docs --type code_story --directory ./src/api --output markdown &gt; api-documentation.md</code></pre>
             </div>
             
             <div className="p-4 border border-border rounded-lg">
@@ -184,7 +184,7 @@ export default function CodeStoryPage() {
           <h2 id="examples">Examples</h2>
           
           <h3 className="mt-6">Generating a Simple Explanation for Non-Technical Stakeholders</h3>
-          <pre><code>vibeinsights generate-docs --type code_story --source ./src/pricing/discount-calculator.js --complexity simple --output markdown > pricing-explanation.md</code></pre>
+          <pre><code>vibeinsights generate-docs --type code_story --source ./src/pricing/discount-calculator.js --complexity simple --output markdown &gt; pricing-explanation.md</code></pre>
           <p>
             Creates a non-technical explanation of how the discount calculator works, suitable for sharing with the business team.
           </p>

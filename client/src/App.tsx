@@ -11,6 +11,12 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import { initMouseTracking, initScrollEffects } from "@/lib/mouseAnimation";
 
+// Import the index page directly
+import DocsIndex from "@/pages/docs/index";
+import Installation from "@/pages/docs/Installation";
+import QuickStart from "@/pages/docs/QuickStart";
+import GitHub from "@/pages/docs/GitHub";
+
 function Router() {
   // Initialize animation effects
   useEffect(() => {
@@ -33,7 +39,14 @@ function Router() {
       <main className="flex-1">
         <Switch>
           <Route path="/" component={Home} />
+          
+          {/* Documentation Routes */}
+          <Route path="/docs" component={DocsIndex} />
+          <Route path="/docs/Installation" component={Installation} />
+          <Route path="/docs/QuickStart" component={QuickStart} />
+          <Route path="/docs/GitHub" component={GitHub} />
           <Route path="/docs/:rest*" component={Documentation} />
+          
           <Route path="/cli-reference" component={CliReference} />
           <Route component={NotFound} />
         </Switch>

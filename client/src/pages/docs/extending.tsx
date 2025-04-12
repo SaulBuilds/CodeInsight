@@ -277,7 +277,7 @@ module.exports = {
       .replace(/^### (.+)$/gm, '==== $1')
       .replace(/\\*\\*(.+?)\\*\\*/g, '*$1*')
       .replace(/\\*(.+?)\\*/g, '_$1_')
-      .replace(/\\`(.+?)\\`/g, '\`$1\`');
+      .replace(/\`(.+?)\`/g, '`$1`');
     
     output += asciidocContent;
     
