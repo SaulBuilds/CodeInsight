@@ -256,17 +256,17 @@ module.exports = {
     let output = '';
     
     // Add document title
-    output += '= ' + metadata.title + '\\n\\n';
+    output += '= ' + metadata.title + '\n\n';
     
     // Add metadata
-    output += ':author: VibeInsights AI\\n';
-    output += ':revdate: ' + new Date().toISOString().split('T')[0] + '\\n';
-    output += ':toc: left\\n';
-    output += ':icons: font\\n\\n';
+    output += ':author: VibeInsights AI\n';
+    output += ':revdate: ' + new Date().toISOString().split('T')[0] + '\n';
+    output += ':toc: left\n';
+    output += ':icons: font\n\n';
     
     // Add description
     if (metadata.description) {
-      output += metadata.description + '\\n\\n';
+      output += metadata.description + '\n\n';
     }
     
     // Process the content (simplified example)
@@ -275,9 +275,9 @@ module.exports = {
       .replace(/^# (.+)$/gm, '== $1')
       .replace(/^## (.+)$/gm, '=== $1')
       .replace(/^### (.+)$/gm, '==== $1')
-      .replace(/\\*\\*(.+?)\\*\\*/g, '*$1*')
-      .replace(/\\*(.+?)\\*/g, '_$1_')
-      .replace(/\`(.+?)\`/g, '`$1`');
+      .replace(/\*\*(.+?)\*\*/g, '*$1*')
+      .replace(/\*(.+?)\*/g, '_$1_')
+      .replace(/`(.+?)`/g, '`$1`');
     
     output += asciidocContent;
     
@@ -288,7 +288,7 @@ module.exports = {
           <p className="mt-4">
             After installing this plugin, you could use the new format:
           </p>
-          <pre><code>{`vibeinsights generate-docs --type architecture --output asciidoc > architecture.adoc`}</code></pre>
+          <pre><code>vibe generate-docs --type architecture --output asciidoc > architecture.adoc</code></pre>
         </div>
 
         <div className="mt-8">

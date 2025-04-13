@@ -85,11 +85,11 @@ export default function PluginsPage() {
           
           <div className="mt-4 space-y-6">
             <div className="p-6 border border-border rounded-lg">
-              <h3 className="mt-0 mb-2">vibeinsights-plugin-jira</h3>
+              <h3 className="mt-0 mb-2">vibe-plugin-jira</h3>
               <p className="mb-2">
                 Integrates with Jira to create issues, epics, and user stories based on VibeInsights AI analysis.
               </p>
-              <pre><code>npm install -g vibeinsights-plugin-jira</code></pre>
+              <pre><code>npm install -g vibe-plugin-jira</code></pre>
               <p className="mt-2">
                 <strong>Key features:</strong>
               </p>
@@ -107,11 +107,11 @@ export default function PluginsPage() {
             </div>
             
             <div className="p-6 border border-border rounded-lg">
-              <h3 className="mt-0 mb-2">vibeinsights-plugin-confluence</h3>
+              <h3 className="mt-0 mb-2">vibe-plugin-confluence</h3>
               <p className="mb-2">
                 Exports generated documentation to Confluence pages with proper formatting.
               </p>
-              <pre><code>npm install -g vibeinsights-plugin-confluence</code></pre>
+              <pre><code>npm install -g vibe-plugin-confluence</code></pre>
               <p className="mt-2">
                 <strong>Key features:</strong>
               </p>
@@ -129,11 +129,11 @@ export default function PluginsPage() {
             </div>
             
             <div className="p-6 border border-border rounded-lg">
-              <h3 className="mt-0 mb-2">vibeinsights-plugin-slack</h3>
+              <h3 className="mt-0 mb-2">vibe-plugin-slack</h3>
               <p className="mb-2">
                 Integrates with Slack for notifications and sharing analysis results.
               </p>
-              <pre><code>npm install -g vibeinsights-plugin-slack</code></pre>
+              <pre><code>npm install -g vibe-plugin-slack</code></pre>
               <p className="mt-2">
                 <strong>Key features:</strong>
               </p>
@@ -160,11 +160,11 @@ export default function PluginsPage() {
           
           <div className="mt-4 space-y-6">
             <div className="p-6 border border-border rounded-lg">
-              <h3 className="mt-0 mb-2">vibeinsights-plugin-gitlab</h3>
+              <h3 className="mt-0 mb-2">vibe-plugin-gitlab</h3>
               <p className="mb-2">
                 Adds GitLab integration similar to the built-in GitHub integration.
               </p>
-              <pre><code>npm install -g vibeinsights-plugin-gitlab</code></pre>
+              <pre><code>npm install -g vibe-plugin-gitlab</code></pre>
               <p className="mt-2">
                 <strong>Key features:</strong>
               </p>
@@ -182,11 +182,11 @@ export default function PluginsPage() {
             </div>
             
             <div className="p-6 border border-border rounded-lg">
-              <h3 className="mt-0 mb-2">vibeinsights-plugin-notion</h3>
+              <h3 className="mt-0 mb-2">vibe-plugin-notion</h3>
               <p className="mb-2">
                 Exports generated documentation to Notion pages with proper formatting.
               </p>
-              <pre><code>npm install -g vibeinsights-plugin-notion</code></pre>
+              <pre><code>npm install -g vibe-plugin-notion</code></pre>
               <p className="mt-2">
                 <strong>Key features:</strong>
               </p>
@@ -204,11 +204,11 @@ export default function PluginsPage() {
             </div>
             
             <div className="p-6 border border-border rounded-lg">
-              <h3 className="mt-0 mb-2">vibeinsights-plugin-graphql</h3>
+              <h3 className="mt-0 mb-2">vibe-plugin-graphql</h3>
               <p className="mb-2">
                 Specialized analysis for GraphQL schemas and resolvers.
               </p>
-              <pre><code>npm install -g vibeinsights-plugin-graphql</code></pre>
+              <pre><code>npm install -g vibe-plugin-graphql</code></pre>
               <p className="mt-2">
                 <strong>Key features:</strong>
               </p>
@@ -241,7 +241,7 @@ export default function PluginsPage() {
             <li>Create a Node.js module that exports the required plugin interface</li>
             <li>Implement your custom functionality using the VibeInsights AI APIs</li>
             <li>Test your plugin locally</li>
-            <li>Publish to npm with the prefix <code>vibeinsights-plugin-</code></li>
+            <li>Publish to npm with the prefix <code>vibe-plugin-</code></li>
           </ol>
         </div>
 
