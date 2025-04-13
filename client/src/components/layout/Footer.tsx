@@ -4,7 +4,7 @@ export default function Footer() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="mb-8 md:mb-0">
-            <p className="font-serif text-xl font-semibold text-foreground">CodeInsight AI</p>
+            <p className="font-serif text-xl font-semibold text-foreground">VibeInsights AI</p>
             <p className="text-foreground/70 mt-2 max-w-md">
               A comprehensive CLI tool for AI researchers that transforms repository analysis and documentation generation.
             </p>
@@ -15,7 +15,7 @@ export default function Footer() {
               <p className="font-serif font-medium text-foreground mb-2">Connect With Us</p>
               <div className="flex space-x-6">
                 <a
-                  href="https://github.com/SaulBuilds/CodeInsight"
+                  href="https://github.com/saulbuilds/vibe-insights"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground/70 hover:text-primary transition-colors"
@@ -24,7 +24,7 @@ export default function Footer() {
                   <i className="fab fa-github text-xl"></i>
                 </a>
                 <a
-                  href="https://www.npmjs.com/package/codeinsight-ai"
+                  href="https://www.npmjs.com/package/vibeinsights"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-foreground/70 hover:text-primary transition-colors"
@@ -63,7 +63,7 @@ export default function Footer() {
         </div>
         
         <div className="mt-12 pt-8 border-t border-border/50 text-center text-foreground/60 text-sm">
-          <p>Copyright © {new Date().getFullYear()} CodeInsight AI. Released under the MIT License.</p>
+          <p>Copyright © {new Date().getFullYear()} VibeInsights AI. Released under the MIT License.</p>
         </div>
       </div>
     </footer>

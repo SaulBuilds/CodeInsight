@@ -148,7 +148,7 @@ export default function DocsIndex() {
             </div>
           </Link>
           
-          <a href="https://github.com/saulbuilds/vibeinsights" target="_blank" rel="noopener noreferrer">
+          <a href="https://github.com/saulbuilds/vibe-insights" target="_blank" rel="noopener noreferrer">
             <div className="cursor-pointer">
               <div className="border border-border/50 rounded-xl p-6 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-md flex flex-col items-center text-center">
                 <i className="fab fa-github text-3xl text-primary mb-4"></i>
@@ -158,7 +158,7 @@ export default function DocsIndex() {
             </div>
           </a>
           
-          <a href="https://www.npmjs.com/package/vibeinsights-ai" target="_blank" rel="noopener noreferrer">
+          <a href="https://www.npmjs.com/package/vibeinsights" target="_blank" rel="noopener noreferrer">
             <div className="cursor-pointer">
               <div className="border border-border/50 rounded-xl p-6 transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-md flex flex-col items-center text-center">
                 <i className="fab fa-npm text-3xl text-primary mb-4"></i>
