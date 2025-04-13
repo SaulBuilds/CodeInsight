@@ -131,9 +131,9 @@ export async function generateCustomAnalysis(codeContent: string, customPrompt: 
       console.log(`Batch processing complete: ${result.metrics.totalChunks} chunks, ${result.metrics.processingTimeMs}ms`);
       return result.combinedResult;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating custom analysis:", error);
-    throw new Error(`Failed to generate custom analysis: ${error.message}`);
+    throw new Error(`Failed to generate custom analysis: ${error.message || 'Unknown error'}`);
   }
 }
 
@@ -154,7 +154,7 @@ export async function validateApiKey(apiKey: string): Promise<boolean> {
     });
     
     return response.choices && response.choices.length > 0;
-  } catch (error) {
+  } catch (error: any) {
     console.error("API key validation failed:", error);
     return false;
   }
@@ -212,9 +212,9 @@ export async function generateCodeStory(codeContent: string, complexity: 'simple
       console.log(`Batch processing complete: ${result.metrics.totalChunks} chunks, ${result.metrics.processingTimeMs}ms`);
       return result.combinedResult;
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error generating code story:", error);
-    throw new Error(`Failed to generate code story: ${error.message}`);
+    throw new Error(`Failed to generate code story: ${error.message || 'Unknown error'}`);
   }
 }
 

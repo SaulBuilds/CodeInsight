@@ -87,8 +87,13 @@ export async function processBatch(
   // Process chunks in batches based on concurrency
   for (let i = 0; i < chunksWithMetadata.length; i += concurrency) {
     const batch = chunksWithMetadata.slice(i, i + concurrency);
-    const batchPromises = batch.map(async (chunk) => {
-      const chunkPrompt = promptTemplate.replace("{{content}}", chunk);
+    const batchPromises = batch.map(async (chunk, batchIndex) => {
+      const chunkIndex = i + batchIndex + 1; // Calculate the actual chunk index
+      
+      // Replace template variables
+      let chunkPrompt = promptTemplate.replace("{{content}}", chunk);
+      chunkPrompt = chunkPrompt.replace("{{chunkIndex}}", chunkIndex.toString());
+      chunkPrompt = chunkPrompt.replace("{{totalChunks}}", chunksWithMetadata.length.toString());
       
       try {
         const response = await openai.chat.completions.create({
