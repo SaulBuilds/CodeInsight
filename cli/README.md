@@ -101,16 +101,16 @@ Generate documentation from repository code using OpenAI:
 
 ```bash
 # Generate architectural documentation
-vibeinsights generate-docs <repository_id> --type architecture
+vibe generate-docs <repository_id> --type architecture
 
 # Generate narrative code story with moderate complexity
-vibeinsights generate-docs <repository_id> --type code_story --complexity moderate
+vibe generate-docs <repository_id> --type code_story --complexity moderate
 
 # Generate user stories
-vibeinsights generate-docs <repository_id> --type user_stories
+vibe generate-docs <repository_id> --type user_stories
 
 # Generate custom analysis
-vibeinsights generate-docs <repository_id> --type custom --prompt "Your custom prompt here"
+vibe generate-docs <repository_id> --type custom --prompt "Your custom prompt here"
 ```
 
 Options:
@@ -124,7 +124,7 @@ Options:
 List all analyzed repositories:
 
 ```bash
-vibeinsights list-repos
+vibe list-repos
 ```
 
 ### List Documentation
@@ -132,7 +132,7 @@ vibeinsights list-repos
 List all documentation generated for a repository:
 
 ```bash
-vibeinsights list-docs <repository_id>
+vibe list-docs <repository_id>
 ```
 
 ### View Document
@@ -140,7 +140,7 @@ vibeinsights list-docs <repository_id>
 View a specific document in the terminal or save as markdown:
 
 ```bash
-vibeinsights view-doc <document_id> --format terminal
+vibe view-doc <document_id> --format terminal
 ```
 
 Options:
@@ -151,7 +151,7 @@ Options:
 Analyze code complexity metrics:
 
 ```bash
-vibeinsights complexity <directory> --output json --threshold 15
+vibe complexity <directory> --output json --threshold 15
 ```
 
 Options:
@@ -167,7 +167,7 @@ Options:
 Analyze dependencies between files in a codebase:
 
 ```bash
-vibeinsights analyze-deps <directory> --output dot --depth 10
+vibe analyze-deps <directory> --output dot --depth 10
 ```
 
 Options:
@@ -183,7 +183,7 @@ Options:
 Search for code patterns or concepts in a repository:
 
 ```bash
-vibeinsights search <directory> --query "database connection handling" --limit 10
+vibe search <directory> --query "database connection handling" --limit 10
 ```
 
 Options:
@@ -198,7 +198,7 @@ Options:
 Detect technology stack used in a repository:
 
 ```bash
-vibeinsights detect-stack <directory> --output text --scan-deps
+vibe detect-stack <directory> --output text --scan-deps
 ```
 
 Options:
@@ -210,19 +210,19 @@ Options:
 
 ```bash
 # Login to GitHub with default settings
-vibeinsights login
+vibe login
 
 # Login using web redirect flow
-vibeinsights login --web-redirect
+vibe login --web-redirect
 
 # Login using custom GitHub app credentials 
-vibeinsights login --use-custom-app
+vibe login --use-custom-app
 
 # Force re-authentication (ignore existing token)
-vibeinsights login --force
+vibe login --force
 
 # Logout of GitHub
-vibeinsights logout
+vibe logout
 ```
 
 ## Advanced Features
@@ -243,7 +243,7 @@ Choose from three complexity levels:
 
 Example usage:
 ```bash
-vibeinsights generate-docs repo_id --type code_story --complexity simple
+vibe generate-docs repo_id --type code_story --complexity simple
 ```
 
 ### Semantic Code Search
@@ -251,7 +251,7 @@ vibeinsights generate-docs repo_id --type code_story --complexity simple
 Find code patterns or concepts using natural language queries. This feature leverages OpenAI embeddings to understand semantic meaning:
 
 ```bash
-vibeinsights search ./my-project --query "error handling for API requests" --use-embeddings
+vibe search ./my-project --query "error handling for API requests" --use-embeddings
 ```
 
 ### Tech Stack Detection
@@ -259,7 +259,7 @@ vibeinsights search ./my-project --query "error handling for API requests" --use
 Automatically identify the languages, frameworks, libraries, and build tools used in a project:
 
 ```bash
-vibeinsights detect-stack ./my-project --output md --scan-deps --check-outdated
+vibe detect-stack ./my-project --output md --scan-deps --check-outdated
 ```
 
 This command generates a report that includes:
