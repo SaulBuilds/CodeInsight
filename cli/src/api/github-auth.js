@@ -211,84 +211,119 @@ async function authenticate(options = {}) {
     );
   }
   
-  // For non-custom app, check if credentials exist or guide the user
+  // For non-custom app, first try to load saved credentials
   if (!useCustomApp && (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET)) {
-    console.log(chalk.yellow('\n⚠️ GitHub OAuth credentials not found'));
+    // Try to load saved credentials
+    const savedCredentials = loadSavedCredentials();
     
-    // Prompt the user for what they want to do
-    const { action } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'action',
-        message: 'How would you like to proceed?',
-        choices: [
-          { name: 'Setup personal GitHub access (recommended for most users)', value: 'personal' },
-          { name: 'Use your own GitHub OAuth app', value: 'oauth' },
-          { name: 'Continue in local-only mode (limited functionality)', value: 'local' },
-        ]
-      }
-    ]);
-    
-    if (action === 'personal') {
-      // Use the Personal Access Token flow instead of OAuth
-      return await authenticateWithPersonalToken();
-    } else if (action === 'oauth') {
-      // Guide them through setting up their own OAuth app
-      console.log(chalk.cyan('\n📝 Setting up your own GitHub OAuth App:'));
-      console.log('1. Go to https://github.com/settings/developers');
-      console.log('2. Click "New OAuth App"');
-      console.log('3. Fill in the application details:');
-      console.log('   - Application name: VibeInsights AI (or any name you prefer)');
-      console.log('   - Homepage URL: https://github.com/YourUsername/vibeinsights');
-      console.log('   - Authorization callback URL: http://localhost:3000/callback');
-      console.log('4. Click "Register application"');
-      console.log('5. On the next page, copy your Client ID');
-      console.log('6. Click "Generate a new client secret" and copy the value\n');
-      
-      // Prompt for credentials
-      const { clientId, clientSecret } = await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'clientId',
-          message: 'Enter your GitHub OAuth Client ID:',
-          validate: (input) => input.trim() ? true : 'Client ID is required'
-        },
-        {
-          type: 'password',
-          name: 'clientSecret',
-          message: 'Enter your GitHub OAuth Client Secret:',
-          validate: (input) => input.trim() ? true : 'Client Secret is required'
-        }
-      ]);
-      
-      // Set these for the current session
-      process.env.GITHUB_CLIENT_ID = clientId.trim();
-      process.env.GITHUB_CLIENT_SECRET = clientSecret.trim();
-      
-      // Ask if they want to save these credentials for future use
-      const { saveCredentials } = await inquirer.prompt([
-        {
-          type: 'confirm',
-          name: 'saveCredentials',
-          message: 'Would you like to save these credentials for future use? (stored in ~/.vibeinsights/credentials.json)',
-          default: true
-        }
-      ]);
-      
-      if (saveCredentials) {
-        // Save credentials to a secured file
-        saveOAuthCredentials(clientId.trim(), clientSecret.trim());
-        console.log(chalk.green('Credentials saved successfully!'));
-      }
+    if (savedCredentials && savedCredentials.type === 'oauth') {
+      // Use saved credentials
+      process.env.GITHUB_CLIENT_ID = savedCredentials.github_client_id;
+      process.env.GITHUB_CLIENT_SECRET = savedCredentials.github_client_secret;
       
       // Update variables for current session
-      GITHUB_CLIENT_ID = clientId.trim();
-      GITHUB_CLIENT_SECRET = clientSecret.trim();
+      GITHUB_CLIENT_ID = savedCredentials.github_client_id;
+      GITHUB_CLIENT_SECRET = savedCredentials.github_client_secret;
+      
+      console.log(chalk.green('✅ Using saved GitHub OAuth credentials'));
     } else {
-      // Return null to indicate local-only mode
-      console.log(chalk.cyan('\nContinuing in local-only mode. Some GitHub features will be unavailable.'));
-      console.log('Run "vibe login" at any time to set up GitHub integration.\n');
-      return null;
+      // No saved credentials, guide the user through setup
+      console.log(chalk.yellow('\n⚠️ GitHub authentication required'));
+      
+      // Check for stored token first - if it exists, verify it still works
+      const storedToken = await getStoredToken();
+      if (storedToken && !forceAuth) {
+        try {
+          // Verify token is still valid
+          const spinner = ora('Verifying existing GitHub token...').start();
+          await axios.get(`${GITHUB_API_URL}/user`, {
+            headers: {
+              Authorization: `token ${storedToken}`
+            }
+          });
+          spinner.succeed('Existing GitHub token is valid');
+          return storedToken;
+        } catch (error) {
+          // Token is invalid, continue with setup
+          console.log(chalk.yellow('⚠️ Existing GitHub token is invalid or expired. Please authenticate again.'));
+        }
+      }
+      
+      // Prompt the user for what they want to do
+      const { action } = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'action',
+          message: 'How would you like to connect to GitHub?',
+          choices: [
+            { name: 'Use personal access token (recommended, simple setup)', value: 'personal' },
+            { name: 'Set up your own GitHub OAuth app (advanced)', value: 'oauth' },
+            { name: 'Continue in local-only mode (limited functionality)', value: 'local' },
+          ]
+        }
+      ]);
+      
+      if (action === 'personal') {
+        // Use the Personal Access Token flow instead of OAuth
+        return await authenticateWithPersonalToken();
+      } else if (action === 'oauth') {
+        // Guide them through setting up their own OAuth app
+        console.log(chalk.cyan('\n📝 Setting up your own GitHub OAuth App:'));
+        console.log('1. Go to https://github.com/settings/developers');
+        console.log('2. Click "New OAuth App"');
+        console.log('3. Fill in the application details:');
+        console.log('   - Application name: VibeInsights AI (or any name you prefer)');
+        console.log('   - Homepage URL: https://github.com/YourUsername/vibeinsights');
+        console.log('   - Authorization callback URL: http://localhost:3000/callback');
+        console.log('4. Click "Register application"');
+        console.log('5. On the next page, copy your Client ID');
+        console.log('6. Click "Generate a new client secret" and copy the value\n');
+        
+        // Prompt for credentials
+        const { clientId, clientSecret } = await inquirer.prompt([
+          {
+            type: 'input',
+            name: 'clientId',
+            message: 'Enter your GitHub OAuth Client ID:',
+            validate: (input) => input.trim() ? true : 'Client ID is required'
+          },
+          {
+            type: 'password',
+            name: 'clientSecret',
+            message: 'Enter your GitHub OAuth Client Secret:',
+            validate: (input) => input.trim() ? true : 'Client Secret is required'
+          }
+        ]);
+        
+        // Set these for the current session
+        process.env.GITHUB_CLIENT_ID = clientId.trim();
+        process.env.GITHUB_CLIENT_SECRET = clientSecret.trim();
+        
+        // Ask if they want to save these credentials for future use
+        const { saveCredentials } = await inquirer.prompt([
+          {
+            type: 'confirm',
+            name: 'saveCredentials',
+            message: 'Would you like to save these credentials for future use?',
+            default: true
+          }
+        ]);
+        
+        if (saveCredentials) {
+          // Save credentials to a secured file
+          saveOAuthCredentials(clientId.trim(), clientSecret.trim());
+          console.log(chalk.green('Credentials saved successfully!'));
+        }
+        
+        // Update variables for current session
+        GITHUB_CLIENT_ID = clientId.trim();
+        GITHUB_CLIENT_SECRET = clientSecret.trim();
+      } else {
+        // Return null to indicate local-only mode
+        console.log(chalk.cyan('\nContinuing in local-only mode. Some GitHub features will be unavailable.'));
+        console.log('Run "vibe login" at any time to set up GitHub integration.\n');
+        return null;
+      }
     }
   }
   
@@ -528,12 +563,118 @@ async function selectRepository(accessToken) {
 }
 
 /**
- * Logout by removing stored GitHub token
+ * Save OAuth credentials to a file for later use
+ * @param {string} clientId - GitHub OAuth client ID
+ * @param {string} clientSecret - GitHub OAuth client secret
+ */
+function saveOAuthCredentials(clientId, clientSecret) {
+  try {
+    // Create directory if it doesn't exist
+    if (!fs.existsSync(path.dirname(CREDENTIALS_PATH))) {
+      fs.mkdirSync(path.dirname(CREDENTIALS_PATH), { recursive: true });
+    }
+    
+    // Save credentials with some minimal security (JSON format allows for future extensibility)
+    fs.writeFileSync(
+      CREDENTIALS_PATH, 
+      JSON.stringify({
+        type: 'oauth',
+        github_client_id: clientId,
+        github_client_secret: clientSecret,
+        created_at: new Date().toISOString()
+      }, null, 2),
+      { mode: 0o600 } // Set file to be readable/writeable only by the user
+    );
+  } catch (error) {
+    console.error('Error saving OAuth credentials:', error.message);
+    throw new Error('Failed to save credentials');
+  }
+}
+
+/**
+ * Load saved credentials if available
+ * @returns {Object|null} The credentials or null if not found
+ */
+function loadSavedCredentials() {
+  if (!fs.existsSync(CREDENTIALS_PATH)) {
+    return null;
+  }
+  
+  try {
+    const credentialsData = JSON.parse(fs.readFileSync(CREDENTIALS_PATH, 'utf8'));
+    return credentialsData;
+  } catch (error) {
+    console.error('Error reading credentials:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Authenticate with GitHub using a Personal Access Token
+ * @returns {Promise<string>} The access token
+ */
+async function authenticateWithPersonalToken() {
+  console.log(chalk.cyan('\n📝 Setting up GitHub Personal Access Token:'));
+  console.log('1. Go to https://github.com/settings/tokens');
+  console.log('2. Click "Generate new token" then "Generate new token (classic)"');
+  console.log('3. Give your token a descriptive name like "Vibe Insights AI"');
+  console.log('4. Select the following scopes:');
+  console.log('   - repo (Full control of private repositories)');
+  console.log('   - read:user (Read access to user information)');
+  console.log('5. Click "Generate token"');
+  console.log('6. Copy your new token (you won\'t be able to see it again!)\n');
+  
+  // Prompt for the token
+  const { token } = await inquirer.prompt([
+    {
+      type: 'password',
+      name: 'token',
+      message: 'Enter your GitHub Personal Access Token:',
+      validate: (input) => input.trim() ? true : 'Token is required'
+    }
+  ]);
+  
+  const accessToken = token.trim();
+  
+  // Verify the token works by making a simple API call
+  const spinner = ora('Verifying token...').start();
+  try {
+    await axios.get(`${GITHUB_API_URL}/user`, {
+      headers: {
+        Authorization: `token ${accessToken}`
+      }
+    });
+    
+    spinner.succeed('GitHub token verified successfully');
+    
+    // Store the token (using the same storage as OAuth tokens)
+    await storeToken(accessToken);
+    
+    return accessToken;
+  } catch (error) {
+    spinner.fail('Failed to verify GitHub token');
+    throw new Error(`Invalid GitHub token: ${error.message}`);
+  }
+}
+
+/**
+ * Logout by removing stored GitHub token and credentials
  * @returns {Promise<void>}
  */
 async function logout() {
+  let loggedOut = false;
+  
   if (fs.existsSync(TOKEN_PATH)) {
     fs.unlinkSync(TOKEN_PATH);
+    loggedOut = true;
+  }
+  
+  if (fs.existsSync(CREDENTIALS_PATH)) {
+    fs.unlinkSync(CREDENTIALS_PATH);
+    loggedOut = true;
+  }
+  
+  if (loggedOut) {
     console.log(chalk.green('Successfully logged out from GitHub.'));
   } else {
     console.log(chalk.yellow('No active GitHub session found.'));
@@ -542,11 +683,14 @@ async function logout() {
 
 module.exports = {
   authenticate,
+  authenticateWithPersonalToken,
   fetchUserRepositories,
   fetchRepositoryContents,
   cloneRepository,
   selectRepository,
   logout,
+  saveOAuthCredentials,
+  loadSavedCredentials,
   // Export constants for advanced usage
   GITHUB_AUTH_URL,
   GITHUB_TOKEN_URL,
