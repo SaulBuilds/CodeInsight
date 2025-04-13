@@ -66,7 +66,7 @@ export default function ExtendingPage() {
             A typical plugin has this structure:
           </p>
           
-          <pre><code>{`// vibeinsights-plugin-example.js
+          <pre><code>// vibe-plugin-example.js
 module.exports = {
   // Plugin metadata
   name: 'example-plugin',
@@ -90,13 +90,13 @@ module.exports = {
     // Command implementation...
     return 'Example command completed';
   }
-};`}</code></pre>
+};</code></pre>
           
           <h3 className="mt-6">Installation</h3>
           <p>
             Install a plugin using npm:
           </p>
-          <pre><code>npm install -g vibeinsights-plugin-example</code></pre>
+          <pre><code>npm install -g vibe-plugin-example</code></pre>
           
           <p className="mt-4">
             Or by placing it in the plugins directory:
@@ -213,7 +213,7 @@ module.exports = {
             You can register hooks in a plugin:
           </p>
           
-          <pre><code>{`// In your plugin's initialize function
+          <pre><code>// In your plugin's initialize function
 context.registerHook('pre-extraction', function(data) {
   console.log('About to extract code from:', data.directory);
   
@@ -229,7 +229,7 @@ context.registerHook('post-documentation', function(result) {
   // You could save to an external system, send notifications, etc.
   
   return result; // Return possibly modified result
-});`}</code></pre>
+});</code></pre>
         </div>
 
         <div className="mt-8 p-6 bg-primary/5 rounded-lg">
@@ -238,7 +238,7 @@ context.registerHook('post-documentation', function(result) {
             This example plugin adds a new output format that converts documentation to AsciiDoc format:
           </p>
           
-          <pre><code>{`// vibeinsights-plugin-asciidoc.js
+          <pre><code>// vibe-plugin-asciidoc.js
 module.exports = {
   name: 'asciidoc-formatter',
   version: '1.0.0',
@@ -283,7 +283,7 @@ module.exports = {
     
     return output;
   }
-}`}</code></pre>
+};</code></pre>
           
           <p className="mt-4">
             After installing this plugin, you could use the new format:
@@ -299,8 +299,8 @@ module.exports = {
           </p>
           
           <h3 className="mt-6">Registering a Custom Prompt</h3>
-          <pre><code>{`context.registerPromptType('security-audit', {
-  systemPrompt: \`You are a cybersecurity expert analyzing code for security vulnerabilities.
+          <pre><code>context.registerPromptType('security-audit', {
+  systemPrompt: `You are a cybersecurity expert analyzing code for security vulnerabilities.
 Focus on identifying potential security issues such as:
 - Injection vulnerabilities (SQL, NoSQL, command injection)
 - Authentication and authorization flaws
@@ -310,19 +310,19 @@ Focus on identifying potential security issues such as:
 - Using components with known vulnerabilities
 - Missing security headers or configurations
 
-Format your analysis with clear headings, severity ratings, and recommendations for each issue found.\`,
-  userPromptTemplate: \`Perform a comprehensive security audit on the following codebase:
+Format your analysis with clear headings, severity ratings, and recommendations for each issue found.`,
+  userPromptTemplate: `Perform a comprehensive security audit on the following codebase:
 
 {{code}}
 
 Focus on identifying security vulnerabilities, categorize them by severity (Critical, High, Medium, Low),
-and provide specific recommendations for fixing each issue.\`
-});`}</code></pre>
+and provide specific recommendations for fixing each issue.`
+});</code></pre>
           
           <p className="mt-4">
             Users could then generate security-focused documentation:
           </p>
-          <pre><code>vibeinsights generate-docs --type security-audit --directory ./my-project</code></pre>
+          <pre><code>vibe generate-docs --type security-audit --directory ./my-project</code></pre>
         </div>
 
         <div className="mt-8">
@@ -332,19 +332,19 @@ and provide specific recommendations for fixing each issue.\`
           <p>
             Plugins can use the storage API to persist data:
           </p>
-          <pre><code>{`initialize: function(context) {
+          <pre><code>initialize: function(context) {
   this.storage = context.getStorage().getPluginStorage(this.name);
   
   // Later, in your commands or hooks
   this.storage.setItem('key', 'value');
   const value = this.storage.getItem('key');
-}`}</code></pre>
+}</code></pre>
           
           <h3 className="mt-6">Using External Libraries</h3>
           <p>
             Plugins can use any npm package:
           </p>
-          <pre><code>{`const axios = require('axios');
+          <pre><code>const axios = require('axios');
 
 module.exports = {
   // ... plugin metadata
@@ -353,13 +353,13 @@ module.exports = {
     const response = await axios.get('https://api.example.com/data');
     // Process data...
   }
-};`}</code></pre>
+};</code></pre>
           
           <h3 className="mt-6">Creating Interactive Commands</h3>
           <p>
             Plugins can create interactive commands using inquirer:
           </p>
-          <pre><code>{`const inquirer = require('inquirer');
+          <pre><code>const inquirer = require('inquirer');
 
 module.exports = {
   // ... plugin metadata
@@ -376,7 +376,7 @@ module.exports = {
     
     // Process based on answers...
   }
-};`}</code></pre>
+};</code></pre>
         </div>
 
         <div className="mt-10">
@@ -392,7 +392,7 @@ module.exports = {
             </li>
             <li>
               <strong>Share as a Git repository:</strong> Users can install directly from Git
-              <pre><code>npm install -g git+https://github.com/username/vibeinsights-plugin-example.git</code></pre>
+              <pre><code>npm install -g git+https://github.com/username/vibe-plugin-example.git</code></pre>
             </li>
             <li>
               <strong>Local installation:</strong> Users can place the plugin file in their plugins directory
@@ -401,7 +401,7 @@ module.exports = {
           </ul>
           
           <p className="mt-4">
-            When publishing to npm, name your package with the prefix <code>vibeinsights-plugin-</code> to
+            When publishing to npm, name your package with the prefix <code>vibe-plugin-</code> to
             make it easily discoverable.
           </p>
         </div>
