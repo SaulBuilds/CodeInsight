@@ -45,7 +45,7 @@ npm install vibeinsights-ai
 ### Running with npx
 
 ```bash
-npx vibeinsights-ai
+npx vibeinsights-ai vibe
 ```
 
 ## Quick Start
@@ -53,23 +53,23 @@ npx vibeinsights-ai
 Run the interactive mode for a guided experience:
 
 ```bash
-vibeinsights
+vibe
 ```
 
 Or use specific commands for direct access to features:
 
 ```bash
 # Analyze complexity metrics for a codebase
-vibeinsights complexity ./my-project
+vibe complexity ./my-project
 
 # Extract code from a repository
-vibeinsights extract ./my-project
+vibe extract ./my-project
 
 # Generate documentation using OpenAI
-vibeinsights generate-docs repo_id
+vibe generate-docs repo_id
 
 # Search code using natural language
-vibeinsights search ./my-project
+vibe search ./my-project
 ```
 
 ## Complete Command Reference
@@ -79,7 +79,7 @@ vibeinsights search ./my-project
 Start interactive mode to guide you through the process:
 
 ```bash
-vibeinsights interactive
+vibe interactive
 ```
 
 ### Extract Code
@@ -87,7 +87,7 @@ vibeinsights interactive
 Extract and analyze code from a repository:
 
 ```bash
-vibeinsights extract [directory] --output analysis.md --exclude dist,build
+vibe extract [directory] --output analysis.md --exclude dist,build
 ```
 
 Options:
