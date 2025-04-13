@@ -41,6 +41,7 @@ const LOCAL_REDIRECT_URI = 'http://localhost:3000/callback';
 
 // Token storage path
 const TOKEN_PATH = path.join(DATA_DIR, 'github-token.json');
+const CREDENTIALS_PATH = path.join(DATA_DIR, 'credentials.json');
 
 /**
  * Get stored GitHub token if available
@@ -210,13 +211,85 @@ async function authenticate(options = {}) {
     );
   }
   
-  // For non-custom app, validate the default credentials
+  // For non-custom app, check if credentials exist or guide the user
   if (!useCustomApp && (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET)) {
-    throw new Error(
-      'Default GitHub OAuth credentials are not available. Please either:\n' +
-      '1. Set VIBE_DEFAULT_GITHUB_CLIENT_ID and VIBE_DEFAULT_GITHUB_CLIENT_SECRET environment variables, or\n' +
-      '2. Use your own GitHub OAuth app with the --use-custom-app flag and GITHUB_CLIENT_ID/GITHUB_CLIENT_SECRET variables'
-    );
+    console.log(chalk.yellow('\n⚠️ GitHub OAuth credentials not found'));
+    
+    // Prompt the user for what they want to do
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'How would you like to proceed?',
+        choices: [
+          { name: 'Setup personal GitHub access (recommended for most users)', value: 'personal' },
+          { name: 'Use your own GitHub OAuth app', value: 'oauth' },
+          { name: 'Continue in local-only mode (limited functionality)', value: 'local' },
+        ]
+      }
+    ]);
+    
+    if (action === 'personal') {
+      // Use the Personal Access Token flow instead of OAuth
+      return await authenticateWithPersonalToken();
+    } else if (action === 'oauth') {
+      // Guide them through setting up their own OAuth app
+      console.log(chalk.cyan('\n📝 Setting up your own GitHub OAuth App:'));
+      console.log('1. Go to https://github.com/settings/developers');
+      console.log('2. Click "New OAuth App"');
+      console.log('3. Fill in the application details:');
+      console.log('   - Application name: VibeInsights AI (or any name you prefer)');
+      console.log('   - Homepage URL: https://github.com/YourUsername/vibeinsights');
+      console.log('   - Authorization callback URL: http://localhost:3000/callback');
+      console.log('4. Click "Register application"');
+      console.log('5. On the next page, copy your Client ID');
+      console.log('6. Click "Generate a new client secret" and copy the value\n');
+      
+      // Prompt for credentials
+      const { clientId, clientSecret } = await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'clientId',
+          message: 'Enter your GitHub OAuth Client ID:',
+          validate: (input) => input.trim() ? true : 'Client ID is required'
+        },
+        {
+          type: 'password',
+          name: 'clientSecret',
+          message: 'Enter your GitHub OAuth Client Secret:',
+          validate: (input) => input.trim() ? true : 'Client Secret is required'
+        }
+      ]);
+      
+      // Set these for the current session
+      process.env.GITHUB_CLIENT_ID = clientId.trim();
+      process.env.GITHUB_CLIENT_SECRET = clientSecret.trim();
+      
+      // Ask if they want to save these credentials for future use
+      const { saveCredentials } = await inquirer.prompt([
+        {
+          type: 'confirm',
+          name: 'saveCredentials',
+          message: 'Would you like to save these credentials for future use? (stored in ~/.vibeinsights/credentials.json)',
+          default: true
+        }
+      ]);
+      
+      if (saveCredentials) {
+        // Save credentials to a secured file
+        saveOAuthCredentials(clientId.trim(), clientSecret.trim());
+        console.log(chalk.green('Credentials saved successfully!'));
+      }
+      
+      // Update variables for current session
+      GITHUB_CLIENT_ID = clientId.trim();
+      GITHUB_CLIENT_SECRET = clientSecret.trim();
+    } else {
+      // Return null to indicate local-only mode
+      console.log(chalk.cyan('\nContinuing in local-only mode. Some GitHub features will be unavailable.'));
+      console.log('Run "vibe login" at any time to set up GitHub integration.\n');
+      return null;
+    }
   }
   
   if (!forceAuth) {
