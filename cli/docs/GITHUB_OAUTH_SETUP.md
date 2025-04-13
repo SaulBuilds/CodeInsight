@@ -4,7 +4,7 @@ This guide explains how VibeInsights AI uses GitHub OAuth for authentication and
 
 ## Default Authentication
 
-VibeInsights AI can use pre-configured GitHub OAuth credentials from environment variables that allow you to authenticate without creating your own GitHub OAuth application. When you run commands that require GitHub access (like `vibe list-repos` or `vibe analyze`), the tool will attempt to use these credentials.
+VibeInsights AI can use pre-configured GitHub OAuth credentials from environment variables that allow you to authenticate without creating your own GitHub OAuth application. When you run commands that require GitHub access (like `vibeinsights list-repos` or `vibeinsights analyze`), the tool will attempt to use these credentials.
 
 ### Setting up Default Credentials
 
@@ -38,7 +38,7 @@ When you authenticate:
 For cases where the local server approach doesn't work (like certain CI/CD environments or systems with firewall restrictions), you can use the web redirect flow:
 
 ```bash
-vibe login --web-redirect
+vibeinsights login --web-redirect
 ```
 
 This will:
@@ -59,7 +59,7 @@ If you prefer to use your own GitHub OAuth App instead of the built-in credentia
 ```bash
 export GITHUB_CLIENT_ID=your_client_id
 export GITHUB_CLIENT_SECRET=your_client_secret
-vibe login --use-custom-app
+vibeinsights login --use-custom-app
 ```
 
 ## Advanced Configuration
@@ -76,8 +76,8 @@ If you're creating a custom integration, you'll need to:
 If you encounter issues with GitHub authentication:
 
 1. **Token Storage**: Tokens are securely stored in `~/.vibeinsights/github-token.json`
-2. **Clear Tokens**: Run `vibe logout` to remove stored tokens
-3. **Force Re-authentication**: Use `vibe login --force` to bypass cached tokens
+2. **Clear Tokens**: Run `vibeinsights logout` to remove stored tokens
+3. **Force Re-authentication**: Use `vibeinsights login --force` to bypass cached tokens
 4. **Access Scopes**: VibeInsights requires the `repo` and `read:user` scopes
 
 For additional assistance, please open an issue on our GitHub repository at https://github.com/SaulBuilds/vibeinsights.
