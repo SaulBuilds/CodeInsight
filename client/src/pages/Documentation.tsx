@@ -24,6 +24,9 @@ import ReportIssue from "@/pages/docs/report-issue";
 
 // Create a map of page identifiers to components
 const pageComponents: Record<string, React.ComponentType> = {
+  // Special case for index/home page
+  '': DocsIndex,
+  
   // Capital cased pages
   'Installation': Installation,
   'QuickStart': QuickStart,
