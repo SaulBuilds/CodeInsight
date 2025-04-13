@@ -2,8 +2,8 @@
 # Setup script for VibeInsights AI environment variables
 
 # Default GitHub OAuth credentials
-export VIBE_DEFAULT_GITHUB_CLIENT_ID="Iv23ctBemy9jpxD1fPA0"
-export VIBE_DEFAULT_GITHUB_CLIENT_SECRET="60c7d756aeb5c92c45626677ffe75feee9eed662"
+export VIBE_DEFAULT_GITHUB_CLIENT_ID="your client Id"
+export VIBE_DEFAULT_GITHUB_CLIENT_SECRET="your client secret"
 
 # Print confirmation (without revealing full secret)
 echo "Environment setup complete:"
