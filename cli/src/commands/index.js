@@ -90,22 +90,42 @@ async function viewDocument(documentId, format = 'terminal') {
 }
 
 /**
- * Interactive process for working with GitHub repositories
+ * Interactive process for working with GitHub repositories or local directories
  */
 async function interactiveGitHub() {
   displayHeader();
   
   try {
-    // Authenticate with GitHub
-    const accessToken = await authenticate();
+    // First, ask if the user wants to use GitHub or local mode
+    const { mode } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'mode',
+        message: 'How would you like to use Vibe Insights AI?',
+        choices: [
+          { name: 'Connect to GitHub (recommended for full features)', value: 'github' },
+          { name: 'Local mode only (analyze directories on your machine)', value: 'local' }
+        ]
+      }
+    ]);
     
-    // Select repository
+    let accessToken = null;
+    
+    // Only authenticate with GitHub if the user chose that mode
+    if (mode === 'github') {
+      console.log(chalk.cyan('\n🔄 Setting up GitHub connection...'));
+      accessToken = await authenticate();
+    } else {
+      console.log(chalk.cyan('\n📂 Running in local-only mode. GitHub features will not be available.'));
+    }
+    
+    // Select repository (handles both GitHub repos and local directories)
     const selectedRepo = await selectRepository(accessToken);
     
-    // Ask for commands to run
+    // Ask for commands to run on the selected repository/directory
     await executeCommandsOnRepo(selectedRepo, accessToken);
   } catch (error) {
-    handleError(error, 'Error in GitHub interactive mode');
+    handleError(error, 'Error in interactive mode');
   }
 }
 

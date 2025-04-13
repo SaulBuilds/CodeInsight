@@ -256,9 +256,18 @@ async function authenticate(options = {}) {
           name: 'action',
           message: 'How would you like to connect to GitHub?',
           choices: [
-            { name: 'Use personal access token (recommended, simple setup)', value: 'personal' },
-            { name: 'Set up your own GitHub OAuth app (advanced)', value: 'oauth' },
-            { name: 'Continue in local-only mode (limited functionality)', value: 'local' },
+            { 
+              name: `${chalk.green('✓')} Personal Access Token (recommended, quick 1-minute setup)`, 
+              value: 'personal' 
+            },
+            { 
+              name: 'Local-only mode (no GitHub, analyze directories on your machine)',
+              value: 'local' 
+            },
+            { 
+              name: 'OAuth App (advanced, requires GitHub developer settings)',
+              value: 'oauth' 
+            },
           ]
         }
       ]);
@@ -320,8 +329,10 @@ async function authenticate(options = {}) {
         GITHUB_CLIENT_SECRET = clientSecret.trim();
       } else {
         // Return null to indicate local-only mode
-        console.log(chalk.cyan('\nContinuing in local-only mode. Some GitHub features will be unavailable.'));
-        console.log('Run "vibe login" at any time to set up GitHub integration.\n');
+        console.log(chalk.cyan('\n📂 Continuing in local-only mode'));
+        console.log(chalk.yellow('In this mode, you can analyze local directories on your machine.'));
+        console.log(chalk.yellow('GitHub-specific features like repository listing and cloning will be unavailable.'));
+        console.log(chalk.gray('Run "vibe login" at any time to set up GitHub integration.\n'));
         return null;
       }
     }
@@ -492,41 +503,72 @@ async function cloneRepository(cloneUrl, targetDir, accessToken = null) {
 
 /**
  * Interactive repository selection
- * @param {string} accessToken - The GitHub access token
+ * @param {string|null} accessToken - The GitHub access token (null for local-only mode)
  * @returns {Promise<object>} The selected repository
  */
 async function selectRepository(accessToken) {
-  const spinner = ora('Fetching your repositories...').start();
-  
   try {
-    // Fetch user repositories
-    const repositories = await fetchUserRepositories(accessToken);
-    spinner.succeed(`Found ${repositories.length} repositories`);
+    // Define choices based on whether we have a GitHub token
+    let choices = [];
     
-    // Prompt user to select a source
-    const { source } = await inquirer.prompt([
-      {
-        type: 'list',
-        name: 'source',
-        message: 'Select repository source:',
-        choices: [
-          { name: 'GitHub Repositories', value: 'github' },
-          { name: 'Local Directory', value: 'local' },
-        ],
-      },
-    ]);
+    if (accessToken) {
+      // Start spinner for GitHub repositories fetching
+      const spinner = ora('Fetching your GitHub repositories...').start();
+      
+      try {
+        // Fetch user repositories
+        const repositories = await fetchUserRepositories(accessToken);
+        spinner.succeed(`Found ${repositories.length} GitHub repositories`);
+        
+        // Add GitHub repositories option if we have any
+        if (repositories.length > 0) {
+          choices.push({ name: `GitHub Repositories (${repositories.length} found)`, value: 'github' });
+        } else {
+          console.log(chalk.yellow('No repositories found in your GitHub account.'));
+        }
+      } catch (error) {
+        spinner.fail(`Error fetching GitHub repositories: ${error.message}`);
+        console.log(chalk.yellow('Continuing with local directory option only.'));
+      }
+    }
+    
+    // Always add local directory option
+    choices.push({ name: 'Local Directory', value: 'local' });
+    
+    // If there are no GitHub repositories or no token, skip source selection
+    let source = 'local';
+    if (choices.length > 1) {
+      // Prompt user to select a source
+      const response = await inquirer.prompt([
+        {
+          type: 'list',
+          name: 'source',
+          message: 'Select repository source:',
+          choices: choices,
+        },
+      ]);
+      source = response.source;
+    }
     
     if (source === 'github') {
+      // Spinner for detailed repository listing
+      const spinner = ora('Loading repository details...').start();
+      
+      // Fetch repositories again (we know this will succeed because we already checked)
+      const repositories = await fetchUserRepositories(accessToken);
+      spinner.succeed('Repository details loaded');
+      
       // Prompt user to select a repository
       const { repoIndex } = await inquirer.prompt([
         {
           type: 'list',
           name: 'repoIndex',
-          message: 'Select a repository:',
+          message: 'Select a GitHub repository:',
           choices: repositories.map((repo, index) => ({
             name: `${repo.fullName} ${repo.isPrivate ? '(Private)' : ''}`,
             value: index,
           })),
+          pageSize: 10, // Show 10 repositories at a time for better navigation
         },
       ]);
       
@@ -541,6 +583,7 @@ async function selectRepository(accessToken) {
           type: 'input',
           name: 'directory',
           message: 'Enter local directory path:',
+          default: process.cwd(), // Default to current directory
           validate: (input) => {
             if (!input) return 'Directory path is required';
             if (!fs.existsSync(input)) return 'Directory does not exist';
@@ -557,8 +600,7 @@ async function selectRepository(accessToken) {
       };
     }
   } catch (error) {
-    spinner.fail();
-    throw error;
+    throw new Error(`Error selecting repository: ${error.message}`);
   }
 }
 
@@ -615,45 +657,95 @@ function loadSavedCredentials() {
  */
 async function authenticateWithPersonalToken() {
   console.log(chalk.cyan('\n📝 Setting up GitHub Personal Access Token:'));
+  console.log(chalk.yellow('📌 Simplified Authentication Instructions:'));
   console.log('1. Go to https://github.com/settings/tokens');
   console.log('2. Click "Generate new token" then "Generate new token (classic)"');
   console.log('3. Give your token a descriptive name like "Vibe Insights AI"');
-  console.log('4. Select the following scopes:');
-  console.log('   - repo (Full control of private repositories)');
-  console.log('   - read:user (Read access to user information)');
-  console.log('5. Click "Generate token"');
-  console.log('6. Copy your new token (you won\'t be able to see it again!)\n');
+  console.log('4. Set expiration to match your needs (90 days recommended)');
+  console.log('5. Select the following scopes:');
+  console.log(`   ${chalk.green('✓')} repo (Access to private repositories)`);
+  console.log(`   ${chalk.green('✓')} read:user (Read access to user information)`);
+  console.log('6. Click "Generate token" and copy your new token');
+  console.log(chalk.gray('   Note: You won\'t be able to see the token again after leaving the page\n'));
+  
+  // Ask if they need more help
+  const { needsHelp } = await inquirer.prompt([
+    {
+      type: 'confirm',
+      name: 'needsHelp',
+      message: 'Do you need more detailed instructions?',
+      default: false
+    }
+  ]);
+  
+  if (needsHelp) {
+    // Display detailed instructions with screenshots (in text form)
+    console.log(chalk.cyan('\n📋 Detailed Instructions:'));
+    console.log('1. Navigate to https://github.com/settings/tokens in your browser');
+    console.log('2. Find the "Generate new token" button at the top right and click it');
+    console.log('3. Select "Generate new token (classic)" from the dropdown');
+    console.log('4. Under "Note", enter "Vibe Insights AI" or another memorable name');
+    console.log('5. For "Expiration", choose a duration that meets your needs');
+    console.log('6. Under "Select scopes", check the following boxes:');
+    console.log('   - The entire "repo" section (for access to your repositories)');
+    console.log('   - Under "user", check "read:user" (to read user profile data)');
+    console.log('7. Scroll down and click the green "Generate token" button');
+    console.log('8. The token will appear as a long string of letters and numbers');
+    console.log('9. Copy this token immediately - it will only be shown once!\n');
+  }
   
   // Prompt for the token
-  const { token } = await inquirer.prompt([
+  const { token, saveTokenPermanently } = await inquirer.prompt([
     {
       type: 'password',
       name: 'token',
       message: 'Enter your GitHub Personal Access Token:',
       validate: (input) => input.trim() ? true : 'Token is required'
+    },
+    {
+      type: 'confirm',
+      name: 'saveTokenPermanently',
+      message: 'Save this token for future sessions?',
+      default: true
     }
   ]);
   
   const accessToken = token.trim();
   
   // Verify the token works by making a simple API call
-  const spinner = ora('Verifying token...').start();
+  const spinner = ora('Verifying token with GitHub...').start();
   try {
-    await axios.get(`${GITHUB_API_URL}/user`, {
+    const response = await axios.get(`${GITHUB_API_URL}/user`, {
       headers: {
         Authorization: `token ${accessToken}`
       }
     });
     
-    spinner.succeed('GitHub token verified successfully');
+    // Get the username for nicer messaging
+    const username = response.data.login;
+    spinner.succeed(`Successfully authenticated as ${chalk.green(username)}`);
     
-    // Store the token (using the same storage as OAuth tokens)
-    await storeToken(accessToken);
+    // Store the token if requested
+    if (saveTokenPermanently) {
+      await storeToken(accessToken);
+      console.log(chalk.green('✅ Token saved securely for future sessions'));
+      console.log(chalk.gray(`   Stored in ${TOKEN_PATH}`));
+    } else {
+      console.log(chalk.yellow('⚠️ Token not saved - you will need to enter it again next time'));
+    }
     
     return accessToken;
   } catch (error) {
     spinner.fail('Failed to verify GitHub token');
-    throw new Error(`Invalid GitHub token: ${error.message}`);
+    
+    // Provide helpful error messaging
+    if (error.response && error.response.status === 401) {
+      console.log(chalk.red('Error: Invalid or expired token. Please generate a new token.'));
+    } else {
+      console.log(chalk.red(`Error: ${error.message}`));
+    }
+    
+    throw new Error(`GitHub authentication failed: ${error.message}`);
   }
 }
 
