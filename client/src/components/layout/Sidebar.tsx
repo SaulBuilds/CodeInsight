@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -71,6 +71,34 @@ export default function Sidebar({ isVisible, onClose }: SidebarProps) {
       ] as NavItem[]
     }
   ];
+  
+  // Helper function to find which section contains the current location
+  const findSectionForPath = (path: string): string | null => {
+    for (const section of sections) {
+      if (section.items.some(item => item.href === path)) {
+        return section.title;
+      }
+    }
+    return null;
+  };
+  
+  // Initialize with 'Getting Started' and the section for the current path if any
+  const initialOpenSections = ['Getting Started'];
+  const currentSection = findSectionForPath(location);
+  if (currentSection && !initialOpenSections.includes(currentSection)) {
+    initialOpenSections.push(currentSection);
+  }
+  
+  // Use state to keep track of open accordion items
+  const [openSections, setOpenSections] = useState<string[]>(initialOpenSections);
+  
+  // Update open sections when location changes
+  useEffect(() => {
+    const sectionForCurrentPath = findSectionForPath(location);
+    if (sectionForCurrentPath && !openSections.includes(sectionForCurrentPath)) {
+      setOpenSections(prev => [...prev, sectionForCurrentPath]);
+    }
+  }, [location, openSections, findSectionForPath]);
 
   return (
     <div 
@@ -96,7 +124,11 @@ export default function Sidebar({ isVisible, onClose }: SidebarProps) {
         </div>
         
         <nav className="space-y-2">
-          <Accordion type="multiple" defaultValue={['Getting Started']}>
+          <Accordion 
+            type="multiple" 
+            value={openSections}
+            onValueChange={setOpenSections}
+          >
             {sections.map((section, index) => (
               <AccordionItem key={index} value={section.title} className="border-border/40">
                 <AccordionTrigger className="font-medium text-md hover:text-primary transition-all py-2">
@@ -124,7 +156,17 @@ export default function Sidebar({ isVisible, onClose }: SidebarProps) {
                               ? 'bg-primary/10 text-primary font-medium' 
                               : 'hover:bg-muted hover:text-primary'
                             }`}
-                          onClick={() => onClose()}
+                          onClick={(e) => {
+                            // Make sure this section stays open
+                            if (!openSections.includes(section.title)) {
+                              setOpenSections([...openSections, section.title]);
+                            }
+                            
+                            // Only close sidebar on mobile
+                            if (window.innerWidth < 768) {
+                              onClose();
+                            }
+                          }}
                         >
                           {item.title}
                         </Link>
