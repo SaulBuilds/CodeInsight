@@ -53,23 +53,23 @@ npx vibeinsights-ai
 Run the interactive mode for a guided experience:
 
 ```bash
-vibe
+vibeinsights
 ```
 
 Or use specific commands for direct access to features:
 
 ```bash
 # Analyze complexity metrics for a codebase
-vibe complexity ./my-project
+vibeinsights complexity ./my-project
 
 # Extract code from a repository
-vibe extract ./my-project
+vibeinsights extract ./my-project
 
 # Generate documentation using OpenAI
-vibe generate-docs repo_id
+vibeinsights generate-docs repo_id
 
 # Search code using natural language
-vibe search ./my-project
+vibeinsights search ./my-project
 ```
 
 ## Complete Command Reference
@@ -79,7 +79,7 @@ vibe search ./my-project
 Start interactive mode to guide you through the process:
 
 ```bash
-vibe interactive
+vibeinsights interactive
 ```
 
 ### Extract Code
@@ -87,7 +87,7 @@ vibe interactive
 Extract and analyze code from a repository:
 
 ```bash
-vibe extract [directory] --output analysis.md --exclude dist,build
+vibeinsights extract [directory] --output analysis.md --exclude dist,build
 ```
 
 Options:
@@ -101,16 +101,16 @@ Generate documentation from repository code using OpenAI:
 
 ```bash
 # Generate architectural documentation
-vibe generate-docs <repository_id> --type architecture
+vibeinsights generate-docs <repository_id> --type architecture
 
 # Generate narrative code story with moderate complexity
-vibe generate-docs <repository_id> --type code_story --complexity moderate
+vibeinsights generate-docs <repository_id> --type code_story --complexity moderate
 
 # Generate user stories
-vibe generate-docs <repository_id> --type user_stories
+vibeinsights generate-docs <repository_id> --type user_stories
 
 # Generate custom analysis
-vibe generate-docs <repository_id> --type custom --prompt "Your custom prompt here"
+vibeinsights generate-docs <repository_id> --type custom --prompt "Your custom prompt here"
 ```
 
 Options:
@@ -124,7 +124,7 @@ Options:
 List all analyzed repositories:
 
 ```bash
-vibe list-repos
+vibeinsights list-repos
 ```
 
 ### List Documentation
@@ -132,7 +132,7 @@ vibe list-repos
 List all documentation generated for a repository:
 
 ```bash
-vibe list-docs <repository_id>
+vibeinsights list-docs <repository_id>
 ```
 
 ### View Document
@@ -140,7 +140,7 @@ vibe list-docs <repository_id>
 View a specific document in the terminal or save as markdown:
 
 ```bash
-vibe view-doc <document_id> --format terminal
+vibeinsights view-doc <document_id> --format terminal
 ```
 
 Options:
@@ -151,7 +151,7 @@ Options:
 Analyze code complexity metrics:
 
 ```bash
-vibe complexity <directory> --output json --threshold 15
+vibeinsights complexity <directory> --output json --threshold 15
 ```
 
 Options:
@@ -167,7 +167,7 @@ Options:
 Analyze dependencies between files in a codebase:
 
 ```bash
-vibe analyze-deps <directory> --output dot --depth 10
+vibeinsights analyze-deps <directory> --output dot --depth 10
 ```
 
 Options:
