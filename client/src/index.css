@@ -84,6 +84,7 @@
 
     --primary: 30 40% 35%;
     --primary-foreground: 40 10% 90%;
+    --primary-rgb: 128, 85, 51; /* RGB value for dark mode primary */
 
     --secondary: 15 30% 30%;
     --secondary-foreground: 40 10% 90%;

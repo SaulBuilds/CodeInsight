@@ -8,7 +8,8 @@ import Home from "@/pages/Home";
 import CliReference from "@/pages/CliReference";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import { initMouseTracking, initScrollEffects } from "@/lib/mouseAnimation";
+import { initScrollEffects } from "@/lib/mouseAnimation";
+import WaveEffect from "@/components/effects/WaveEffect";
 
 // Import all documentation components
 import DocsIndex from "@/pages/docs/index";
@@ -31,15 +32,11 @@ import ReportIssue from "@/pages/docs/report-issue";
 function Router() {
   // Initialize animation effects
   useEffect(() => {
-    // Setup mouse tracking for parallax effects
-    const cleanupMouseTracking = initMouseTracking();
-    
-    // Setup scroll-based animations
+    // Setup scroll-based animations only
     const cleanupScrollEffects = initScrollEffects();
     
     // Cleanup on unmount
     return () => {
-      if (cleanupMouseTracking) cleanupMouseTracking();
       if (cleanupScrollEffects) cleanupScrollEffects();
     };
   }, []);
@@ -85,6 +82,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Router />
       <Toaster />
+      <WaveEffect />
     </QueryClientProvider>
   );
 }
