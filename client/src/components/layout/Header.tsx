@@ -59,35 +59,29 @@ export default function Header() {
                 </Link>
               </div>
               <nav className="hidden md:ml-10 md:flex md:space-x-8">
-                <Link href="/">
-                  <a className={`${
-                    location === "/" 
-                      ? "text-primary border-b-2 border-primary" 
-                      : "text-foreground/80 hover:text-primary"
-                    } px-3 py-2 text-sm font-medium transition-colors`}
-                  >
-                    Home
-                  </a>
+                <Link href="/" className={`${
+                  location === "/" 
+                    ? "text-primary border-b-2 border-primary" 
+                    : "text-foreground/80 hover:text-primary"
+                  } px-3 py-2 text-sm font-medium transition-colors`}
+                >
+                  Home
                 </Link>
-                <Link href="/docs">
-                  <a className={`${
-                    location === "/docs" 
-                      ? "text-primary border-b-2 border-primary" 
-                      : "text-foreground/80 hover:text-primary"
-                    } px-3 py-2 text-sm font-medium transition-colors`}
-                  >
-                    Documentation
-                  </a>
+                <Link href="/docs" className={`${
+                  location === "/docs" 
+                    ? "text-primary border-b-2 border-primary" 
+                    : "text-foreground/80 hover:text-primary"
+                  } px-3 py-2 text-sm font-medium transition-colors`}
+                >
+                  Documentation
                 </Link>
-                <Link href="/cli-reference">
-                  <a className={`${
-                    location === "/cli-reference" 
-                      ? "text-primary border-b-2 border-primary" 
-                      : "text-foreground/80 hover:text-primary"
-                    } px-3 py-2 text-sm font-medium transition-colors`}
-                  >
-                    CLI Reference
-                  </a>
+                <Link href="/cli-reference" className={`${
+                  location === "/cli-reference" 
+                    ? "text-primary border-b-2 border-primary" 
+                    : "text-foreground/80 hover:text-primary"
+                  } px-3 py-2 text-sm font-medium transition-colors`}
+                >
+                  CLI Reference
                 </Link>
                 <a 
                   href="https://github.com/saulbuilds/vibeinsights" 
@@ -147,20 +141,26 @@ export default function Header() {
         <div className="animated-blob blob-3"></div>
         
         <nav className="flex flex-col items-center text-center space-y-8">
-          <Link href="/" onClick={closeMenu}>
-            <a className={`overlay-menu-item text-foreground hover:text-primary transition-colors`}>
-              Home
-            </a>
+          <Link 
+            href="/" 
+            onClick={closeMenu}
+            className="overlay-menu-item text-foreground hover:text-primary transition-colors"
+          >
+            Home
           </Link>
-          <Link href="/docs" onClick={closeMenu}>
-            <a className={`overlay-menu-item text-foreground hover:text-primary transition-colors`}>
-              Documentation
-            </a>
+          <Link 
+            href="/docs" 
+            onClick={closeMenu}
+            className="overlay-menu-item text-foreground hover:text-primary transition-colors"
+          >
+            Documentation
           </Link>
-          <Link href="/cli-reference" onClick={closeMenu}>
-            <a className={`overlay-menu-item text-foreground hover:text-primary transition-colors`}>
-              CLI Reference
-            </a>
+          <Link 
+            href="/cli-reference" 
+            onClick={closeMenu}
+            className="overlay-menu-item text-foreground hover:text-primary transition-colors"
+          >
+            CLI Reference
           </Link>
           <a 
             href="https://github.com/saulbuilds/vibeinsights" 

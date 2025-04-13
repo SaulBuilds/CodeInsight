@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation, useRoute } from 'wouter';
+import { useLocation, useRoute, Link } from 'wouter';
 import DocLayout from "@/components/layout/DocLayout";
 
 // Import all doc pages
@@ -88,11 +88,22 @@ export default function Documentation() {
         setContent(<ReportIssue />);
         break;
       default:
-        // For pages we don't have, redirect to docs index
+        // For pages we don't have, show a "not found" message instead of redirecting
         console.log("Page not found:", page);
-        setLocation('/docs');
+        setContent(
+          <DocLayout 
+            title="Page Not Found" 
+            description="This documentation page could not be found."
+          >
+            <div className="prose dark:prose-invert max-w-none">
+              <h1>Documentation Page Not Found</h1>
+              <p>The page <code>{page}</code> does not exist in our documentation.</p>
+              <p><Link href="/docs" className="text-primary hover:underline">Return to Documentation Home</Link></p>
+            </div>
+          </DocLayout>
+        );
     }
-  }, [params, setLocation]);
+  }, [params]);
 
   if (content) {
     return <>{content}</>;
