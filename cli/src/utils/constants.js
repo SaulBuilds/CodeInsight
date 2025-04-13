@@ -15,7 +15,7 @@ const DOCS_DIR = path.join(DATA_DIR, 'documents');
 const TEMP_DIR = path.join(DATA_DIR, 'temp');
 
 // Config constants
-const CLI_NAME = 'vibeinsights';
+const CLI_NAME = 'vibe';
 const CLI_DESCRIPTION = 'AI-powered repository analysis & documentation generation';
 const CLI_VERSION = '1.0.0';
 

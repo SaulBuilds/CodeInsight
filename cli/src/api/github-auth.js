@@ -332,7 +332,7 @@ async function authenticate(options = {}) {
         console.log(chalk.cyan('\n📂 Continuing in local-only mode'));
         console.log(chalk.yellow('In this mode, you can analyze local directories on your machine.'));
         console.log(chalk.yellow('GitHub-specific features like repository listing and cloning will be unavailable.'));
-        console.log(chalk.gray('Run "vibeinsights login" at any time to set up GitHub integration.\n'));
+        console.log(chalk.gray('Run "vibe login" at any time to set up GitHub integration.\n'));
         return null;
       }
     }
