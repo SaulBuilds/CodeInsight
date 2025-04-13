@@ -19,9 +19,9 @@ export default function PluginsPage() {
             Most VibeInsights AI plugins are published on npm and can be installed using npm or yarn:
           </p>
           
-          <pre><code>npm install -g vibeinsights-plugin-name</code></pre>
+          <pre><code>npm install -g vibe-plugin-name</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
-            Replace "vibeinsights-plugin-name" with the actual plugin name.
+            Replace "vibe-plugin-name" with the actual plugin name.
           </p>
           
           <p className="mt-4">
@@ -47,7 +47,7 @@ export default function PluginsPage() {
           </p>
           
           <h3 className="mt-6">List Installed Plugins</h3>
-          <pre><code>vibeinsights list-plugins</code></pre>
+          <pre><code>vibe list-plugins</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This shows all installed plugins with their versions and descriptions.
           </p>
@@ -56,8 +56,8 @@ export default function PluginsPage() {
           <p>
             You can enable or disable plugins without uninstalling them:
           </p>
-          <pre><code>vibeinsights disable-plugin plugin-name</code></pre>
-          <pre><code>vibeinsights enable-plugin plugin-name</code></pre>
+          <pre><code>vibe disable-plugin plugin-name</code></pre>
+          <pre><code>vibe enable-plugin plugin-name</code></pre>
           
           <h3 className="mt-6">Configure Plugins</h3>
           <p>
@@ -252,7 +252,7 @@ export default function PluginsPage() {
           <p>
             With the Confluence plugin installed:
           </p>
-          <pre><code>vibeinsights generate-docs --type architecture --directory ./my-project --output confluence</code></pre>
+          <pre><code>vibe generate-docs --type architecture --directory ./my-project --output confluence</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This will prompt for your Confluence credentials and space details.
           </p>
@@ -261,7 +261,7 @@ export default function PluginsPage() {
           <p>
             With the Jira plugin installed:
           </p>
-          <pre><code>vibeinsights generate-docs --type user_stories --directory ./my-project --output jira --jira-project "PROJ"</code></pre>
+          <pre><code>vibe generate-docs --type user_stories --directory ./my-project --output jira --jira-project "PROJ"</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This creates Jira issues from the generated user stories.
           </p>
@@ -270,7 +270,7 @@ export default function PluginsPage() {
           <p>
             With the GraphQL plugin installed:
           </p>
-          <pre><code>{`vibeinsights graphql-analyze --schema ./schema.graphql --output html > schema-analysis.html`}</code></pre>
+          <pre><code>{`vibe graphql-analyze --schema ./schema.graphql --output html > schema-analysis.html`}</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This analyzes your GraphQL schema and generates a detailed report.
           </p>

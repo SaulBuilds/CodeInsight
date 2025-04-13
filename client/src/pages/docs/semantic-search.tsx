@@ -145,23 +145,23 @@ export default function SemanticSearchPage() {
             
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Security Questions</h3>
-              <pre><code>vibeinsights search "How are passwords stored and verified?"</code></pre>
-              <pre><code>vibeinsights search "What authentication mechanisms are used?"</code></pre>
-              <pre><code>vibeinsights search "How does the app prevent SQL injection?"</code></pre>
+              <pre><code>vibe search "How are passwords stored and verified?"</code></pre>
+              <pre><code>vibe search "What authentication mechanisms are used?"</code></pre>
+              <pre><code>vibe search "How does the app prevent SQL injection?"</code></pre>
             </div>
             
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Architecture Questions</h3>
-              <pre><code>vibeinsights search "What design patterns are used in the codebase?"</code></pre>
-              <pre><code>vibeinsights search "How is the application's state managed?"</code></pre>
-              <pre><code>vibeinsights search "What is the data flow between components?"</code></pre>
+              <pre><code>vibe search "What design patterns are used in the codebase?"</code></pre>
+              <pre><code>vibe search "How is the application's state managed?"</code></pre>
+              <pre><code>vibe search "What is the data flow between components?"</code></pre>
             </div>
             
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Bug Hunting</h3>
-              <pre><code>vibeinsights search "Where might race conditions occur?"</code></pre>
-              <pre><code>vibeinsights search "How are edge cases handled in the payment processing?"</code></pre>
-              <pre><code>vibeinsights search "Find potential memory leaks"</code></pre>
+              <pre><code>vibe search "Where might race conditions occur?"</code></pre>
+              <pre><code>vibe search "How are edge cases handled in the payment processing?"</code></pre>
+              <pre><code>vibe search "Find potential memory leaks"</code></pre>
             </div>
           </div>
         </div>
@@ -198,25 +198,25 @@ export default function SemanticSearchPage() {
           <p>
             Help new team members understand your codebase:
           </p>
-          <pre><code>vibeinsights search "How does the authentication system work?" --directory ./my-project</code></pre>
+          <pre><code>vibe search "How does the authentication system work?" --directory ./my-project</code></pre>
           
           <h3 className="mt-6">Finding Implementation Details</h3>
           <p>
             Quickly locate specific functionality:
           </p>
-          <pre><code>vibeinsights search "How are PDF reports generated?" --directory ./my-project</code></pre>
+          <pre><code>vibe search "How are PDF reports generated?" --directory ./my-project</code></pre>
           
           <h3 className="mt-6">Security Reviews</h3>
           <p>
             Identify security-related code for review:
           </p>
-          <pre><code>vibeinsights search "Where is user input sanitized before database operations?" --directory ./my-project</code></pre>
+          <pre><code>vibe search "Where is user input sanitized before database operations?" --directory ./my-project</code></pre>
           
           <h3 className="mt-6">Bug Investigation</h3>
           <p>
             Find code related to reported issues:
           </p>
-          <pre><code>vibeinsights search "How are timeout errors handled in API requests?" --directory ./my-project</code></pre>
+          <pre><code>vibe search "How are timeout errors handled in API requests?" --directory ./my-project</code></pre>
         </div>
 
         <div className="mt-8">
@@ -226,7 +226,7 @@ export default function SemanticSearchPage() {
           <p>
             Combine semantic search with GitHub integration for a streamlined workflow:
           </p>
-          <pre><code>vibeinsights github
+          <pre><code>vibe github
 # Select repository interactively
 # Choose "Search code semantically" from the options</code></pre>
           
@@ -234,13 +234,13 @@ export default function SemanticSearchPage() {
           <p>
             Generate markdown documentation of your search results:
           </p>
-          <pre><code>{`vibeinsights search "API endpoint implementation patterns" --output markdown > api-patterns.md`}</code></pre>
+          <pre><code>{`vibe search "API endpoint implementation patterns" --output markdown > api-patterns.md`}</code></pre>
           
           <h3 className="mt-6">Focused Search</h3>
           <p>
             Combine multiple filtering options for precise results:
           </p>
-          <pre><code>vibeinsights search "React component lifecycle handling" --language javascript --filter "src/components/**/*.jsx" --exclude "**/*.test.jsx"</code></pre>
+          <pre><code>vibe search "React component lifecycle handling" --language javascript --filter "src/components/**/*.jsx" --exclude "**/*.test.jsx"</code></pre>
         </div>
 
         <div className="mt-10">

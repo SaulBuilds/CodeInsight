@@ -67,7 +67,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Semantic Search</h3>
               <p className="mb-2">Search codebase using natural language:</p>
-              <pre><code>vibeinsights search "how does user authentication work" --directory ./path/to/repo</code></pre>
+              <pre><code>vibe search "how does user authentication work" --directory ./path/to/repo</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Uses OpenAI embeddings to find code that semantically matches your query.
               </p>
