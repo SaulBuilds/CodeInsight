@@ -39,7 +39,7 @@ function Router() {
           
           {/* Documentation Routes */}
           <Route path="/docs" component={DocsIndex} />
-          <Route path="/docs/:page" component={Documentation} />
+          <Route path="/docs/:page*" component={Documentation} />
           
           <Route path="/cli-reference" component={CliReference} />
           <Route component={NotFound} />

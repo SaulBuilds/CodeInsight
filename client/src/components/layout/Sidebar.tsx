@@ -116,17 +116,17 @@ export default function Sidebar({ isVisible, onClose }: SidebarProps) {
                           {item.title} <i className="fas fa-external-link-alt text-xs ml-1"></i>
                         </a>
                       ) : (
-                        <Link key={itemIndex} href={item.href}>
-                          <a 
-                            className={`block py-1.5 px-2 rounded-md text-sm transition-colors 
-                              ${location === item.href 
-                                ? 'bg-primary/10 text-primary font-medium' 
-                                : 'hover:bg-muted hover:text-primary'
-                              }`}
-                            onClick={() => onClose()}
-                          >
-                            {item.title}
-                          </a>
+                        <Link 
+                          key={itemIndex} 
+                          href={item.href}
+                          className={`block py-1.5 px-2 rounded-md text-sm transition-colors 
+                            ${location === item.href 
+                              ? 'bg-primary/10 text-primary font-medium' 
+                              : 'hover:bg-muted hover:text-primary'
+                            }`}
+                          onClick={() => onClose()}
+                        >
+                          {item.title}
                         </Link>
                       )
                     ))}

@@ -84,16 +84,15 @@ export default function DocLayout({ children, title, description }: DocLayoutPro
 
               {/* Navigation */}
               <div className="mt-12 pt-6 border-t border-border/50 flex justify-between">
-                <Button 
-                  variant="outline" 
-                  className="border-primary/30 hover:bg-primary/10 text-foreground"
-                  asChild
-                >
-                  <Link href="/docs">
+                <Link href="/docs">
+                  <Button 
+                    variant="outline" 
+                    className="border-primary/30 hover:bg-primary/10 text-foreground"
+                  >
                     <i className="fas fa-arrow-left mr-2"></i>
                     Back to Docs
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
               </div>
             </div>
           </main>

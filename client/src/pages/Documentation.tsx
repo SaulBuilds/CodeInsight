@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useLocation, useRoute, Link } from 'wouter';
+import { memo } from 'react';
+import { Link, useRoute } from 'wouter';
 import DocLayout from "@/components/layout/DocLayout";
 
 // Import all doc pages
@@ -22,101 +22,76 @@ import Plugins from "@/pages/docs/plugins";
 import Download from "@/pages/docs/download";
 import ReportIssue from "@/pages/docs/report-issue";
 
-export default function Documentation() {
-  const [, setLocation] = useLocation();
-  const [, params] = useRoute('/docs/:page');
-  const [content, setContent] = useState<React.ReactNode>(null);
+// Create a map of page identifiers to components
+const pageComponents: Record<string, React.ComponentType> = {
+  // Capital cased pages
+  'Installation': Installation,
+  'QuickStart': QuickStart,
+  'GitHub': GitHub,
   
-  useEffect(() => {
-    // Get the page from the route parameters
-    const page = params?.page;
-    
-    if (!page) {
-      // If no page, render the docs index
-      setContent(<DocsIndex />);
-      return;
-    }
-    
-    // Handle specific documentation pages
-    switch (page) {
-      // Capital cased pages
-      case 'Installation':
-        setContent(<Installation />);
-        break;
-      case 'QuickStart':
-        setContent(<QuickStart />);
-        break;
-      case 'GitHub':
-        setContent(<GitHub />);
-        break;
-        
-      // Hyphenated pages
-      case 'code-extraction':
-        setContent(<CodeExtraction />);
-        break;
-      case 'documentation-generation':
-        setContent(<DocumentationGeneration />);
-        break;
-      case 'dependency-analysis':
-        setContent(<DependencyAnalysis />);
-        break;
-      case 'complexity-metrics':
-        setContent(<ComplexityMetrics />);
-        break;
-      case 'semantic-search':
-        setContent(<SemanticSearch />);
-        break;
-      case 'code-story':
-        setContent(<CodeStory />);
-        break;
-      case 'user-stories':
-        setContent(<UserStories />);
-        break;
-      case 'openai-api':
-        setContent(<OpenAIAPI />);
-        break;
-      case 'configuration':
-        setContent(<Configuration />);
-        break;
-      case 'plugins':
-        setContent(<Plugins />);
-        break;
-      case 'download':
-        setContent(<Download />);
-        break;
-      case 'report-issue':
-        setContent(<ReportIssue />);
-        break;
-      default:
-        // For pages we don't have, show a "not found" message instead of redirecting
-        console.log("Page not found:", page);
-        setContent(
-          <DocLayout 
-            title="Page Not Found" 
-            description="This documentation page could not be found."
-          >
-            <div className="prose dark:prose-invert max-w-none">
-              <h1>Documentation Page Not Found</h1>
-              <p>The page <code>{page}</code> does not exist in our documentation.</p>
-              <p><Link href="/docs" className="text-primary hover:underline">Return to Documentation Home</Link></p>
-            </div>
-          </DocLayout>
-        );
-    }
-  }, [params]);
+  // Hyphenated pages
+  'code-extraction': CodeExtraction,
+  'documentation-generation': DocumentationGeneration,
+  'dependency-analysis': DependencyAnalysis,
+  'complexity-metrics': ComplexityMetrics,
+  'semantic-search': SemanticSearch,
+  'code-story': CodeStory,
+  'user-stories': UserStories,
+  'openai-api': OpenAIAPI,
+  'configuration': Configuration,
+  'plugins': Plugins,
+  'download': Download,
+  'report-issue': ReportIssue,
+};
 
-  if (content) {
-    return <>{content}</>;
+// Create a "Not Found" page as a separate component
+const DocNotFound = memo(({ page }: { page: string }) => (
+  <DocLayout 
+    title="Page Not Found" 
+    description="This documentation page could not be found."
+  >
+    <div className="prose dark:prose-invert max-w-none">
+      <h1>Documentation Page Not Found</h1>
+      <p>The page <code>{page}</code> does not exist in our documentation.</p>
+      <p><Link href="/docs" className="text-primary hover:underline">Return to Documentation Home</Link></p>
+    </div>
+  </DocLayout>
+));
+
+// Create a loading component
+const DocLoading = memo(() => (
+  <DocLayout 
+    title="Documentation" 
+    description="Comprehensive documentation for VibeInsights AI"
+  >
+    <div className="prose dark:prose-invert max-w-none">
+      <p>Loading documentation...</p>
+    </div>
+  </DocLayout>
+));
+
+// Memoize the Documentation component
+export default memo(function Documentation() {
+  // Use useRoute to get the page parameter
+  const [match, params] = useRoute<{ page: string }>('/docs/:page');
+  
+  // If we don't have a match or params, something went wrong
+  if (!match || !params) {
+    return <DocLoading />;
   }
-
-  return (
-    <DocLayout 
-      title="Documentation" 
-      description="Comprehensive documentation for VibeInsights AI - learn how to analyze repositories and generate documentation."
-    >
-      <div className="prose dark:prose-invert max-w-none">
-        <p>Loading documentation...</p>
-      </div>
-    </DocLayout>
-  );
-}
+  
+  // Get the page from the route parameters
+  const { page } = params;
+  
+  // Check if we have a component for this page
+  const PageComponent = pageComponents[page];
+  
+  // If we don't have a component, show the not found page
+  if (!PageComponent) {
+    console.log("Page not found:", page);
+    return <DocNotFound page={page} />;
+  }
+  
+  // Render the appropriate component for the requested page
+  return <PageComponent />;
+});
