@@ -183,7 +183,7 @@ Options:
 Search for code patterns or concepts in a repository:
 
 ```bash
-vibe search <directory> --query "database connection handling" --limit 10
+vibeinsights search <directory> --query "database connection handling" --limit 10
 ```
 
 Options:
@@ -198,7 +198,7 @@ Options:
 Detect technology stack used in a repository:
 
 ```bash
-vibe detect-stack <directory> --output text --scan-deps
+vibeinsights detect-stack <directory> --output text --scan-deps
 ```
 
 Options:
@@ -210,19 +210,19 @@ Options:
 
 ```bash
 # Login to GitHub with default settings
-vibe login
+vibeinsights login
 
 # Login using web redirect flow
-vibe login --web-redirect
+vibeinsights login --web-redirect
 
 # Login using custom GitHub app credentials 
-vibe login --use-custom-app
+vibeinsights login --use-custom-app
 
 # Force re-authentication (ignore existing token)
-vibe login --force
+vibeinsights login --force
 
 # Logout of GitHub
-vibe logout
+vibeinsights logout
 ```
 
 ## Advanced Features
@@ -243,7 +243,7 @@ Choose from three complexity levels:
 
 Example usage:
 ```bash
-vibe generate-docs repo_id --type code_story --complexity simple
+vibeinsights generate-docs repo_id --type code_story --complexity simple
 ```
 
 ### Semantic Code Search
@@ -251,7 +251,7 @@ vibe generate-docs repo_id --type code_story --complexity simple
 Find code patterns or concepts using natural language queries. This feature leverages OpenAI embeddings to understand semantic meaning:
 
 ```bash
-vibe search ./my-project --query "error handling for API requests" --use-embeddings
+vibeinsights search ./my-project --query "error handling for API requests" --use-embeddings
 ```
 
 ### Tech Stack Detection
@@ -259,7 +259,7 @@ vibe search ./my-project --query "error handling for API requests" --use-embeddi
 Automatically identify the languages, frameworks, libraries, and build tools used in a project:
 
 ```bash
-vibe detect-stack ./my-project --output md --scan-deps --check-outdated
+vibeinsights detect-stack ./my-project --output md --scan-deps --check-outdated
 ```
 
 This command generates a report that includes:

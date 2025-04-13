@@ -38,7 +38,7 @@ export GITHUB_CLIENT_SECRET="your_client_secret"
 4. Use the `--use-custom-app` flag when logging in:
 
 ```bash
-vibe login --use-custom-app
+vibeinsights login --use-custom-app
 ```
 
 ## OpenAI API Key
