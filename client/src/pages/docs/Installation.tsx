@@ -22,7 +22,7 @@ export default function InstallationPage() {
           <p>
             The recommended way to install VibeInsights AI is through npm. This will install the CLI tool globally on your system, making it available from any terminal.
           </p>
-          <pre><code>npm install -g vibeinsights-ai</code></pre>
+          <pre><code>npm install -g vibeinsights</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This will install the latest stable version of VibeInsights AI and make it available as a global command.
           </p>
@@ -33,7 +33,7 @@ export default function InstallationPage() {
           <p>
             If you prefer using yarn, you can install VibeInsights AI with the following command:
           </p>
-          <pre><code>yarn global add vibeinsights-ai</code></pre>
+          <pre><code>yarn global add vibeinsights</code></pre>
         </div>
 
         <div className="mt-8">
@@ -41,7 +41,7 @@ export default function InstallationPage() {
           <p>
             If you prefer not to install the package globally, you can use npx to run VibeInsights AI directly:
           </p>
-          <pre><code>npx vibeinsights-ai [command] [options]</code></pre>
+          <pre><code>npx vibeinsights [command] [options]</code></pre>
           <p className="text-sm text-muted-foreground mt-2">
             This will download and execute the latest version of VibeInsights AI for the current session only.
           </p>
@@ -52,11 +52,11 @@ export default function InstallationPage() {
           <p>
             To verify that VibeInsights AI has been installed correctly, run the following command:
           </p>
-          <pre><code>vibeinsights --version</code></pre>
+          <pre><code>vibe --version</code></pre>
           <p>
             This should display the current version of VibeInsights AI. You can also check the available commands by running:
           </p>
-          <pre><code>vibeinsights --help</code></pre>
+          <pre><code>vibe --help</code></pre>
         </div>
 
         <div className="mt-8 p-6 bg-primary/5 rounded-lg">
@@ -81,7 +81,7 @@ $env:OPENAI_API_KEY="your-api-key"</code></pre>
           <p>
             Provide the API key directly with the <code>--api-key</code> option when running commands that require it:
           </p>
-          <pre><code>vibeinsights generate-docs --api-key="your-api-key" ...</code></pre>
+          <pre><code>vibe generate-docs --api-key="your-api-key" ...</code></pre>
 
           <h3>Option 3: Interactive Prompt</h3>
           <p>
@@ -106,7 +106,7 @@ $env:OPENAI_API_KEY="your-api-key"</code></pre>
           <p className="mb-2">If you encounter any issues during installation:</p>
           <ul className="mt-0">
             <li>Make sure your Node.js version is 14.0.0 or higher (<code>node --version</code>)</li>
-            <li>Try installing with the <code>--force</code> flag: <code>npm install -g vibeinsights-ai --force</code></li>
+            <li>Try installing with the <code>--force</code> flag: <code>npm install -g vibeinsights --force</code></li>
             <li>If you get permission errors, you might need to use <code>sudo</code> on Unix-based systems or run your terminal as Administrator on Windows</li>
             <li>Clear npm cache with <code>npm cache clean --force</code> and try installing again</li>
           </ul>

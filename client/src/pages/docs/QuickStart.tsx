@@ -31,7 +31,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Extract Code</h3>
               <p className="mb-2">Extract and analyze code from a local repository:</p>
-              <pre><code>vibeinsights extract --directory ./path/to/repo --output extracted-code.txt</code></pre>
+              <pre><code>vibe extract --directory ./path/to/repo --output extracted-code.txt</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 This extracts all code files from the specified directory, excluding binary files and common excluded directories like node_modules.
               </p>
@@ -40,7 +40,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Generate Documentation</h3>
               <p className="mb-2">Generate comprehensive documentation from code:</p>
-              <pre><code>vibeinsights generate-docs --source extracted-code.txt --type architecture</code></pre>
+              <pre><code>vibe generate-docs --source extracted-code.txt --type architecture</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Uses OpenAI to analyze the code and generate various types of documentation.
               </p>
@@ -49,7 +49,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Analyze Dependencies</h3>
               <p className="mb-2">Map dependencies between files:</p>
-              <pre><code>vibeinsights analyze-deps --directory ./path/to/repo --output dot</code></pre>
+              <pre><code>vibe analyze-deps --directory ./path/to/repo --output dot</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Analyzes imports and exports to create a visualization of file dependencies.
               </p>
@@ -58,7 +58,7 @@ export default function QuickStartPage() {
             <div className="p-4 border border-border rounded-lg">
               <h3 className="mt-0 mb-2">Analyze Complexity</h3>
               <p className="mb-2">Calculate code complexity metrics:</p>
-              <pre><code>vibeinsights complexity --directory ./path/to/repo --output html</code></pre>
+              <pre><code>vibe complexity --directory ./path/to/repo --output html</code></pre>
               <p className="text-sm text-muted-foreground mt-2">
                 Measures cyclomatic complexity and other metrics to identify potential issues.
               </p>
@@ -84,28 +84,28 @@ export default function QuickStartPage() {
           <ol className="mt-4">
             <li>
               <strong>Connect to GitHub (optional):</strong>
-              <pre><code>vibeinsights github</code></pre>
+              <pre><code>vibe github</code></pre>
               <p>Follow the interactive prompts to select and clone a repository.</p>
             </li>
             <li>
               <strong>Alternatively, analyze a local repository:</strong>
-              <pre><code>vibeinsights extract --directory ./path/to/local/repo</code></pre>
+              <pre><code>vibe extract --directory ./path/to/local/repo</code></pre>
             </li>
             <li>
               <strong>Generate architectural documentation:</strong>
-              <pre><code>vibeinsights generate-docs --type architecture --directory ./path/to/repo</code></pre>
+              <pre><code>vibe generate-docs --type architecture --directory ./path/to/repo</code></pre>
             </li>
             <li>
               <strong>Analyze dependencies to understand the codebase structure:</strong>
-              <pre><code>vibeinsights analyze-deps --directory ./path/to/repo --output html</code></pre>
+              <pre><code>vibe analyze-deps --directory ./path/to/repo --output html</code></pre>
             </li>
             <li>
               <strong>Identify complex areas that might need refactoring:</strong>
-              <pre><code>vibeinsights complexity --directory ./path/to/repo --threshold 15</code></pre>
+              <pre><code>vibe complexity --directory ./path/to/repo --threshold 15</code></pre>
             </li>
             <li>
               <strong>Generate code stories for complex portions:</strong>
-              <pre><code>vibeinsights generate-docs --type code-story --source complex-file.js</code></pre>
+              <pre><code>vibe generate-docs --type code-story --source complex-file.js</code></pre>
             </li>
           </ol>
         </div>

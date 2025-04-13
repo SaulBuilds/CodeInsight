@@ -15,21 +15,21 @@ export default function InstallationTabs() {
         <TabsContent value="npm">
           <CodeBlock
             language="bash"
-            code="$ npm install -g codeinsight-ai"
+            code="$ npm install -g vibeinsights"
           />
         </TabsContent>
         
         <TabsContent value="yarn">
           <CodeBlock
             language="bash"
-            code="$ yarn global add codeinsight-ai"
+            code="$ yarn global add vibeinsights"
           />
         </TabsContent>
         
         <TabsContent value="npx">
           <CodeBlock
             language="bash"
-            code="$ npx codeinsight-ai [command] [options]"
+            code="$ npx vibeinsights [command] [options]"
           />
         </TabsContent>
       </Tabs>

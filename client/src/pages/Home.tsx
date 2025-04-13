@@ -183,14 +183,14 @@ export default function Home() {
               <span className="text-foreground/70 text-sm font-medium">Terminal</span>
             </div>
             <div className="p-6 font-mono text-lg text-foreground overflow-x-auto">
-              <span className="text-secondary">$</span> npm install -g vibeinsights-ai
+              <span className="text-secondary">$</span> npm install -g vibeinsights
             </div>
           </div>
           
           <p className="mt-6 text-center text-foreground/80">
             After installation, you can use the{" "}
             <code className="font-mono px-2 py-1 rounded bg-muted text-primary">
-              vibeinsights
+              vibe
             </code>{" "}
             command globally in your terminal.
           </p>
