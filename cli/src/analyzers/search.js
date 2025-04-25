@@ -6,9 +6,31 @@
 
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
+// const glob = require('glob'); // Remove glob dependency
 const chalk = require('chalk');
-const OpenAI = require('openai');
+const Parser = require('tree-sitter');
+const JavaScript = require('tree-sitter-javascript');
+const Python = require('tree-sitter-python');
+
+// Standard ignore patterns (similar to .gitignore)
+const DEFAULT_IGNORE_PATTERNS = [
+  '**/node_modules/**',
+  '**/dist/**',
+  '**/build/**',
+  '**/.git/**',
+  '**/package-lock.json',
+  '**/yarn.lock'
+];
+
+// Helper function to match ignore patterns (simplified)
+function isIgnored(filePath, ignorePatterns = DEFAULT_IGNORE_PATTERNS, baseDir) {
+  const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/'); // Use forward slashes
+  // Basic check: does the relative path contain ignored directory names?
+  return ignorePatterns.some(pattern => {
+    const simplifiedPattern = pattern.replace(/\*\*\//g, '').replace(/\/\*\*/g, ''); // Simplistic removal of **/
+    return relativePath.includes(simplifiedPattern);
+  });
+}
 
 /**
  * Perform semantic search on a codebase using natural language
@@ -19,7 +41,9 @@ const OpenAI = require('openai');
  * @param {number} options.context - Lines of context to show
  * @param {string} options.apiKey - OpenAI API key
  * @param {boolean} options.useEmbeddings - Whether to use embeddings for semantic search
- * @returns {Promise<Object>} - Search results
+ * @param {string[]} options.fileExt - Array of file extensions to filter by
+ * @param {string} options.filterType - Type of code construct to filter for (e.g., function, class, variable)
+ * @returns {Promise<Object>} - Search results with formatted output
  */
 async function searchCodebase(options) {
   const {
@@ -28,69 +52,130 @@ async function searchCodebase(options) {
     limit = 10,
     context = 3,
     apiKey,
-    useEmbeddings = true
+    useEmbeddings = true,
+    fileExt = [],
+    filterType = ''
   } = options;
+  console.log(chalk.magenta('--- Entering searchCodebase ---'));
+  console.log(chalk.magenta(`Options received: ${JSON.stringify(options)}`));
 
-  // Find all code files
-  const files = await findCodeFiles(directory);
-  
-  // If no files found, return early
-  if (files.length === 0) {
-    return {
-      query,
-      results: [],
-      message: 'No code files found in the specified directory.'
-    };
+  const files = await findCodeFiles(directory, fileExt);
+  console.log(chalk.magenta(`Files found by findCodeFiles: ${JSON.stringify(files)}`));
+
+  if (!files || files.length === 0) {
+    const formattedOutput = chalk.yellow('No code files found in the specified directory.');
+    console.log(chalk.magenta('Exiting searchCodebase early: No files found.'));
+    return { query, results: [], resultCount: 0, semanticSearch: useEmbeddings && apiKey, formattedOutput };
   }
 
-  // Choose the search method based on options
   let searchResults;
   if (useEmbeddings && apiKey) {
-    searchResults = await performSemanticSearch(files, query, limit, directory, apiKey);
+    console.log(chalk.blue('>>> Calling performSemanticSearch...'));
+    try {
+      searchResults = await performSemanticSearch(files, query, limit, directory, apiKey, { constructType: filterType });
+      console.log(chalk.blue(`<<< performSemanticSearch returned (type: ${typeof searchResults}, isArray: ${Array.isArray(searchResults)}, length: ${Array.isArray(searchResults) ? searchResults.length : 'N/A'})`));
+    } catch (semanticError) {
+      console.error(chalk.red('>>> Error DIRECTLY from performSemanticSearch call:'), semanticError.message);
+      searchResults = [];
+    }
   } else {
-    searchResults = await performSimpleSearch(files, query, limit, directory);
+    console.log(chalk.blue('Calling performSimpleSearch...'));
+    searchResults = await performSimpleSearch(files, query, limit, directory, { constructType: filterType });
+    console.log(chalk.blue(`performSimpleSearch returned: ${JSON.stringify(searchResults)}`));
   }
 
-  // Add context to the results
-  const resultsWithContext = await addContextToResults(searchResults, context);
+  if (!Array.isArray(searchResults)) {
+    console.error(chalk.red(`Search results are not an array after search execution! Got: ${typeof searchResults}. Defaulting to empty array.`));
+    searchResults = [];
+  }
+  console.log(chalk.magenta(`searchResults before addContextToResults (length: ${searchResults.length})`));
 
-  return {
+  const resultsWithContext = await addContextToResults(searchResults, context);
+  console.log(chalk.magenta(`resultsWithContext (length: ${resultsWithContext.length})`));
+
+  const formattedOutput = formatSearchResults({
     query,
     results: resultsWithContext,
     resultCount: resultsWithContext.length,
     semanticSearch: useEmbeddings && apiKey
-  };
+  }, 'text');
+
+  console.log(chalk.magenta('--- Exiting searchCodebase normally ---'));
+
+  return { query, results: resultsWithContext, resultCount: resultsWithContext.length, semanticSearch: useEmbeddings && apiKey, formattedOutput };
 }
 
 /**
- * Find all code files in a directory
+ * Find all code files in a directory recursively using fs
  * @param {string} directory - Directory to search
- * @returns {Promise<string[]>} - List of file paths
+ * @param {string[]} fileExt - Array of file extensions to filter by (lowercase, e.g., ['js', 'py'])
+ * @returns {Promise<string[]>} - List of absolute file paths
  */
-async function findCodeFiles(directory) {
-  return new Promise((resolve, reject) => {
-    const pattern = '**/*.{js,jsx,ts,tsx,py,java,go,rb,php,c,cpp,cs,html,css,json,md}';
-    const options = {
-      cwd: directory,
-      ignore: [
-        '**/node_modules/**',
-        '**/dist/**',
-        '**/build/**',
-        '**/.git/**',
-        '**/package-lock.json',
-        '**/yarn.lock'
-      ],
-      absolute: true
-    };
+async function findCodeFiles(directory, fileExt = []) {
+  console.log(chalk.cyan(`--- Entering findCodeFiles (Manual FS Walk) ---`));
+  console.log(chalk.cyan(`Directory: ${directory}, FileExt: ${JSON.stringify(fileExt)}`));
 
-    glob(pattern, options, (err, files) => {
-      if (err) {
-        reject(err);
-        return;
+  const resolvedDirectory = path.resolve(directory);
+  console.log(chalk.cyan(`Resolved Directory: ${resolvedDirectory}`));
+
+  const allowedExtensions = fileExt.length > 0 
+    ? new Set(fileExt.map(ext => `.${ext.toLowerCase()}`))
+    : null; // null means allow all default extensions (or maybe define defaults?)
+
+  const allFiles = [];
+
+  function walkSync(currentDirPath) {
+    try {
+      const entries = fs.readdirSync(currentDirPath);
+
+      for (const entry of entries) {
+        const fullPath = path.join(currentDirPath, entry);
+        
+        // Check against ignore patterns before proceeding
+        if (isIgnored(fullPath, DEFAULT_IGNORE_PATTERNS, resolvedDirectory)) {
+           // console.log(chalk.grey(`Ignoring: ${fullPath}`));
+           continue; 
+        }
+
+        try {
+          const stat = fs.statSync(fullPath);
+
+          if (stat.isDirectory()) {
+            walkSync(fullPath); // Recurse into subdirectories
+          } else if (stat.isFile()) {
+            const fileExtension = path.extname(fullPath).toLowerCase();
+            
+            // Filter by extension
+            if (allowedExtensions) {
+              if (allowedExtensions.has(fileExtension)) {
+                allFiles.push(path.resolve(fullPath)); // Ensure absolute path
+              }
+            } else {
+              // If no extensions specified, maybe use a default list or include all?
+              // For now, including based on a default list if fileExt is empty
+              const defaultExts = new Set(['.js', '.jsx', '.ts', '.tsx', '.py', '.java', '.go', '.rb', '.php', '.c', '.cpp', '.cs', '.html', '.css', '.json', '.md']);
+              if (defaultExts.has(fileExtension)) {
+                 allFiles.push(path.resolve(fullPath));
+              }
+            }
+          }
+        } catch (statError) {
+          console.warn(chalk.yellow(`Could not get stats for ${fullPath}: ${statError.message}`));
+        }
       }
-      resolve(files);
-    });
-  });
+    } catch (readError) {
+      console.error(chalk.red(`Could not read directory ${currentDirPath}: ${readError.message}`));
+    }
+  }
+
+  if (!fs.existsSync(resolvedDirectory)) {
+     console.error(chalk.red(`Directory does not exist: ${resolvedDirectory}`));
+     return Promise.resolve([]); // Return empty array if dir doesn't exist
+  }
+
+  walkSync(resolvedDirectory);
+  console.log(chalk.cyan(`Manual walk found ${allFiles.length} files: ${JSON.stringify(allFiles)}`));
+  return Promise.resolve(allFiles);
 }
 
 /**
@@ -100,29 +185,61 @@ async function findCodeFiles(directory) {
  * @param {number} limit - Maximum number of results
  * @param {string} baseDir - Base directory for relative paths
  * @param {string} apiKey - OpenAI API key
+ * @param {Object} filters - Additional filters for search
  * @returns {Promise<Object[]>} - Search results
  */
-async function performSemanticSearch(files, query, limit, baseDir, apiKey) {
-  // Initialize OpenAI client
-  const openai = new OpenAI({ apiKey });
-  
-  // Get embedding for the query
-  const queryEmbedding = await getEmbedding(query, openai);
-  
-  // Process files in batches to avoid memory issues
-  const batchSize = 50;
-  let allResults = [];
-  
-  for (let i = 0; i < files.length; i += batchSize) {
-    const batch = files.slice(i, i + batchSize);
-    const batchResults = await processBatch(batch, queryEmbedding, baseDir, openai);
-    allResults = allResults.concat(batchResults);
+async function performSemanticSearch(files, query, limit, baseDir, apiKey, filters = {}) {
+  console.log(chalk.yellow('--- Entering performSemanticSearch ---'));
+  console.log(chalk.yellow(`Files received: ${JSON.stringify(files)}`)); 
+  console.log(chalk.yellow(`Query: "${query}", Limit: ${limit}, BaseDir: ${baseDir}, API Key Present: ${!!apiKey}, Filters: ${JSON.stringify(filters)}`));
+
+  try {
+    // Check files array explicitly
+    if (!files || files.length === 0) {
+      console.error(chalk.red('performSemanticSearch received empty or invalid files array.'));
+      return []; // Return empty results if no files
+    }
+    console.log(chalk.cyan(`performSemanticSearch: Found ${files.length} files to process.`)); 
+
+    if (!apiKey || typeof apiKey !== 'string') {
+      console.error(chalk.red(`Invalid OpenAI API key provided: ${apiKey}`));
+      throw new Error('Invalid OpenAI API key');
+    }
+
+    const { Configuration, OpenAIApi } = require('openai');
+    const configuration = new Configuration({ apiKey });
+    const openai = new OpenAIApi(configuration);
+
+    console.log(chalk.cyan('Getting query embedding...'));
+    const queryEmbedding = await getEmbedding(query, openai);
+    if (!Array.isArray(queryEmbedding)) {
+       console.error(chalk.red('Failed to generate query embedding. Embedding was not an array.'));
+      throw new Error('Failed to generate query embedding');
+    }
+     console.log(chalk.cyan(`Query embedding received (length: ${queryEmbedding.length})`));
+
+    const batchSize = 50;
+    let allResults = [];
+    // This log was added previously but didn't appear, let's verify again
+    console.log(chalk.blue(`Preparing to loop through ${files.length} files in batches...`)); 
+
+     for (let i = 0; i < files.length; i += batchSize) { 
+       const batch = files.slice(i, i + batchSize);
+       console.log(chalk.blue(`Processing batch ${Math.floor(i / batchSize) + 1} (files ${i + 1} to ${Math.min(i + batchSize, files.length)})`)); 
+      const batchResults = await processBatch(batch, queryEmbedding, baseDir, openai, filters);
+      allResults = allResults.concat(batchResults);
+    }
+
+    console.log(chalk.cyan(`Finished processing all batches. Total results found: ${allResults.length}`));
+
+    return allResults
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+  } catch (error) {
+    console.error(chalk.red(`Error caught in performSemanticSearch: ${error.message}`)); // Enhanced catch log
+    // console.error(chalk.gray(`Stack trace: ${error.stack}`)); // Optionally uncomment for more detail
+    throw error; // Re-throw to ensure it propagates
   }
-  
-  // Sort by similarity score (descending) and take the top results
-  return allResults
-    .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, limit);
 }
 
 /**
@@ -131,45 +248,195 @@ async function performSemanticSearch(files, query, limit, baseDir, apiKey) {
  * @param {number[]} queryEmbedding - Query embedding vector
  * @param {string} baseDir - Base directory for relative paths
  * @param {Object} openai - OpenAI client
+ * @param {Object} filters - Additional filters for code constructs
  * @returns {Promise<Object[]>} - Search results
  */
-async function processBatch(files, queryEmbedding, baseDir, openai) {
+async function processBatch(files, queryEmbedding, baseDir, openai, filters = {}) {
   const results = [];
+  const parser = new Parser();
   
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf8');
     const relativePath = path.relative(baseDir, file);
+    const ext = path.extname(file).toLowerCase();
     
-    // Skip empty files or very large files
-    if (!content.trim() || content.length > 100000) continue;
+    // Re-add large file check
+    if (!content.trim() || content.length > 100000) { 
+      console.warn(chalk.yellow(`Skipping large or empty file: ${relativePath} (length: ${content.length})`));
+      continue;
+    }
     
-    // Split file into chunks of code
-    const chunks = splitIntoChunks(content);
+    let language;
+    if (['.js', '.jsx', '.ts', '.tsx'].includes(ext)) {
+      language = JavaScript;
+    } else if (ext === '.py') {
+      language = Python;
+    }
     
-    for (const [chunk, lineStart, lineEnd] of chunks) {
-      // Skip very small chunks
-      if (chunk.length < 50) continue;
-      
-      // Get embedding for this chunk
-      const embedding = await getEmbedding(chunk, openai);
-      
-      // Calculate cosine similarity
-      const similarity = calculateCosineSimilarity(queryEmbedding, embedding);
-      
-      // If the similarity is above a threshold, add to results
-      if (similarity > 0.7) {
+    let constructs = [];
+    if (filters.constructType && language) {
+      console.log(chalk.magenta(`Attempting to extract constructs of type '${filters.constructType}' from ${relativePath}`));
+      parser.setLanguage(language);
+      const tree = parser.parse(content);
+      constructs = extractConstructs(tree, filters.constructType);
+      console.log(chalk.magenta(`Extracted ${constructs.length} constructs of type '${filters.constructType}'.`));
+      // Log extracted construct names for debugging
+      if (constructs.length > 0) {
+        console.log(chalk.grey(`Construct names: ${constructs.map(c => c.name).join(', ')}`));
+      }
+    }
+    
+    if (constructs.length > 0) {
+      console.log(chalk.blue(`Processing ${constructs.length} specific constructs for ${relativePath}...`));
+      for (const construct of constructs) {
+        const chunk = content.slice(construct.startIndex, construct.endIndex);
+        // if (chunk.length < 50) continue; // Temporarily commented out
+        console.log(chalk.grey(`  Processing construct '${construct.name}' chunk (length ${chunk.length})`));
+        
+        const embedding = await getEmbedding(chunk, openai);
+        if (!Array.isArray(embedding) || !Array.isArray(queryEmbedding)) {
+            console.warn(chalk.yellow(`  Skipping construct '${construct.name}': Invalid embedding received.`));
+            continue;
+        }
+        
+        const similarity = calculateCosineSimilarity(queryEmbedding, embedding);
+        console.log(chalk.grey(`  Similarity for '${construct.name}': ${similarity.toFixed(4)}`));
+
+        const chunkSizeFactor = Math.min(chunk.length / 500, 1);
+        const typeWeight = construct.type === 'function' ? 1.2 : construct.type === 'class' ? 1.1 : 1.0;
+        const finalScore = similarity * 0.7 + chunkSizeFactor * 0.2 + typeWeight * 0.1;
+        
+        results.push({
+          file: relativePath,
+          lineStart: construct.lineStart,
+          lineEnd: construct.lineEnd,
+          content: chunk,
+          similarity,
+          score: finalScore,
+          constructType: construct.type,
+          constructName: construct.name || 'anonymous'
+        });
+      }
+    } else {
+      if (filters.constructType) {
+         console.log(chalk.yellow(`No constructs of type '${filters.constructType}' found in ${relativePath}, processing whole file chunks instead.`));
+      }
+      console.log(chalk.blue(`Processing ${relativePath} using general chunks...`));
+      const chunks = splitIntoChunks(content);
+      for (const [chunk, lineStart, lineEnd] of chunks) {
+        // if (chunk.length < 50) continue; // Temporarily commented out
+        console.log(chalk.grey(`  Processing general chunk lines ${lineStart}-${lineEnd} (length ${chunk.length})`));
+
+        const embedding = await getEmbedding(chunk, openai);
+        if (!Array.isArray(embedding) || !Array.isArray(queryEmbedding)) {
+          console.warn(chalk.yellow(`  Skipping general chunk lines ${lineStart}-${lineEnd}: Invalid embedding received.`));
+          continue;
+        }
+        
+        const similarity = calculateCosineSimilarity(queryEmbedding, embedding);
+        console.log(chalk.grey(`  Similarity for general chunk lines ${lineStart}-${lineEnd}: ${similarity.toFixed(4)}`));
+
         results.push({
           file: relativePath,
           lineStart,
           lineEnd,
           content: chunk,
-          similarity
+          similarity,
+          score: similarity
         });
       }
     }
   }
   
   return results;
+}
+
+/**
+ * Extract code constructs using Tree-Sitter
+ * @param {Object} tree - Parsed Tree-Sitter tree
+ * @param {string} filterType - Type of construct to filter for ('function', 'class', 'variable')
+ * @returns {Object[]} - Array of constructs with type, startIndex, endIndex, lineStart, and lineEnd
+ */
+function extractConstructs(tree, filterType) {
+  const constructs = [];
+
+  // Define mappings from filterType to actual Tree-sitter node types
+  const typeMapping = {
+    function: ['function_declaration', 'arrow_function', 'function_definition', 'method_definition'],
+    class: ['class_declaration', 'class_definition'],
+    variable: ['variable_declarator', 'lexical_declaration'] // Might need refinement for specific languages
+  };
+
+  // Determine the list of actual Tree-sitter node types to look for
+  let targetNodeTypes = [];
+  if (filterType && typeMapping[filterType]) {
+    targetNodeTypes = typeMapping[filterType];
+    console.log(chalk.grey(`extractConstructs: Targeting specific node types: ${targetNodeTypes.join(', ')}`));
+  } else {
+    // If no filter or unknown filter, target all known types
+    targetNodeTypes = Object.values(typeMapping).flat();
+    if (filterType) {
+        console.log(chalk.yellow(`extractConstructs: Unknown filterType '${filterType}'. Targeting all default node types.`));
+    } else {
+        console.log(chalk.grey(`extractConstructs: No filterType provided. Targeting all default node types.`));
+    }
+  }
+  const targetNodeTypeSet = new Set(targetNodeTypes);
+
+  function traverse(node) {
+    if (targetNodeTypeSet.has(node.type)) {
+      let simplifiedType = '';
+      // Categorize the found node type
+      if (typeMapping.function.includes(node.type)) {
+        simplifiedType = 'function';
+      } else if (typeMapping.class.includes(node.type)) {
+        simplifiedType = 'class';
+      } else if (typeMapping.variable.includes(node.type)) {
+        simplifiedType = 'variable';
+      }
+
+      if (simplifiedType) { 
+          let nameNode = null; // Initialize nameNode
+          let name = 'anonymous';
+
+          // Updated name-finding logic
+          if ((node.type === 'function_declaration' || node.type === 'class_declaration' || node.type === 'method_definition') && node.childForFieldName('name')) {
+              nameNode = node.childForFieldName('name');
+              name = nameNode.text;
+          } else if (node.type === 'class_definition' && node.childForFieldName('name')) { // Specific check for Python class
+              nameNode = node.childForFieldName('name');
+              name = nameNode.text;
+          } else if (node.type === 'variable_declarator' && node.childForFieldName('name')) {
+              nameNode = node.childForFieldName('name');
+              name = nameNode.text;
+          } else if (node.type === 'lexical_declaration') {
+              const declarator = node.children.find(child => child.type === 'variable_declarator');
+              if (declarator && declarator.childForFieldName('name')) {
+                  nameNode = declarator.childForFieldName('name');
+                  name = nameNode.text;
+              }
+          } else {
+              // Fallback: Try finding the first identifier child if specific logic fails
+              nameNode = node.children.find(child => child.type === 'identifier');
+              if (nameNode) name = nameNode.text;
+          }
+          
+          constructs.push({
+            type: simplifiedType,
+            name: name, // Use the found name
+            startIndex: node.startIndex,
+            endIndex: node.endIndex,
+            lineStart: node.startPosition.row + 1,
+            lineEnd: node.endPosition.row + 1
+          });
+      }
+    }
+    node.namedChildren.forEach(child => traverse(child));
+  }
+  
+  traverse(tree.rootNode);
+  console.log(chalk.grey(`extractConstructs: Finished traversal. Found ${constructs.length} matching constructs.`));
+  return constructs;
 }
 
 /**
@@ -180,7 +447,7 @@ async function processBatch(files, queryEmbedding, baseDir, openai) {
 function splitIntoChunks(content) {
   const lines = content.split('\n');
   const chunks = [];
-  const chunkSize = 30; // Lines per chunk
+  const chunkSize = 30;
   
   for (let i = 0; i < lines.length; i += chunkSize) {
     const chunk = lines.slice(i, i + chunkSize).join('\n');
@@ -198,15 +465,20 @@ function splitIntoChunks(content) {
  */
 async function getEmbedding(text, openai) {
   try {
-    const response = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: text,
+    if (!text || typeof text !== 'string' || text.trim().length === 0) {
+      throw new Error('Invalid input text');
+    }
+    const response = await openai.createEmbedding({
+      model: 'text-embedding-ada-002',
+      input: text.trim()
     });
-    
-    return response.data[0].embedding;
+    const embedding = response.data.data[0].embedding;
+    if (!Array.isArray(embedding) || embedding.length === 0 || embedding.every(val => val === 0)) {
+      throw new Error('Invalid embedding response');
+    }
+    return embedding;
   } catch (error) {
     console.error(chalk.red(`Error getting embedding: ${error.message}`));
-    // Return a zero vector as fallback
     return Array(1536).fill(0);
   }
 }
@@ -218,12 +490,10 @@ async function getEmbedding(text, openai) {
  * @returns {number} - Cosine similarity
  */
 function calculateCosineSimilarity(vec1, vec2) {
-  // Check if vectors have the same dimension
-  if (vec1.length !== vec2.length) {
-    throw new Error('Vectors must have the same dimension');
+  if (!Array.isArray(vec1) || !Array.isArray(vec2) || vec1.length !== vec2.length || vec1.every(val => val === 0) || vec2.every(val => val === 0)) {
+    throw new Error('Vectors must be valid arrays of the same dimension');
   }
   
-  // Calculate dot product
   let dotProduct = 0;
   let norm1 = 0;
   let norm2 = 0;
@@ -234,11 +504,9 @@ function calculateCosineSimilarity(vec1, vec2) {
     norm2 += vec2[i] * vec2[i];
   }
   
-  // Calculate magnitudes
   norm1 = Math.sqrt(norm1);
   norm2 = Math.sqrt(norm2);
   
-  // Return cosine similarity
   if (norm1 === 0 || norm2 === 0) return 0;
   return dotProduct / (norm1 * norm2);
 }
@@ -249,49 +517,81 @@ function calculateCosineSimilarity(vec1, vec2) {
  * @param {string} query - Search query
  * @param {number} limit - Maximum number of results
  * @param {string} baseDir - Base directory for relative paths
+ * @param {Object} filters - Additional filters for search
  * @returns {Promise<Object[]>} - Search results
  */
-async function performSimpleSearch(files, query, limit, baseDir) {
+async function performSimpleSearch(files, query, limit, baseDir, filters = {}) {
   const results = [];
   const keywords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+  const parser = new Parser();
   
   for (const file of files) {
     try {
       const content = fs.readFileSync(file, 'utf8');
-      const lines = content.split('\n');
       const relativePath = path.relative(baseDir, file);
+      const ext = path.extname(file).toLowerCase();
       
-      // Check each line for keyword matches
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].toLowerCase();
-        
-        // Calculate a simple match score based on keyword occurrences
-        let matchScore = 0;
-        for (const keyword of keywords) {
-          if (line.includes(keyword)) {
-            matchScore += 1;
+      let language;
+      if (['.js', '.jsx', '.ts', '.tsx'].includes(ext)) {
+        language = JavaScript;
+      } else if (ext === '.py') {
+        language = Python;
+      }
+      
+      let constructs = [];
+      if (filters.constructType && language) {
+        parser.setLanguage(language);
+        const tree = parser.parse(content);
+        constructs = extractConstructs(tree, filters.constructType);
+      }
+      
+      if (constructs.length > 0) {
+        for (const construct of constructs) {
+          const chunk = content.slice(construct.startIndex, construct.endIndex).toLowerCase();
+          let matchScore = 0;
+          for (const keyword of keywords) {
+            if (chunk.includes(keyword)) matchScore += 1;
+          }
+          if (matchScore > 0) {
+            results.push({
+              file: relativePath,
+              lineStart: construct.lineStart,
+              lineEnd: construct.lineEnd,
+              content: content.slice(construct.startIndex, construct.endIndex),
+              similarity: matchScore / keywords.length,
+              score: matchScore / keywords.length,
+              constructType: construct.type,
+              constructName: construct.name || 'anonymous'
+            });
           }
         }
-        
-        if (matchScore > 0) {
-          results.push({
-            file: relativePath,
-            lineStart: i + 1,
-            lineEnd: i + 1,
-            content: lines[i],
-            similarity: matchScore / keywords.length // Normalize to a 0-1 scale
-          });
+      } else {
+        const lines = content.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].toLowerCase();
+          let matchScore = 0;
+          for (const keyword of keywords) {
+            if (line.includes(keyword)) matchScore += 1;
+          }
+          if (matchScore > 0) {
+            results.push({
+              file: relativePath,
+              lineStart: i + 1,
+              lineEnd: i + 1,
+              content: lines[i],
+              similarity: matchScore / keywords.length,
+              score: matchScore / keywords.length
+            });
+          }
         }
       }
     } catch (error) {
-      // Skip files that can't be read
       continue;
     }
   }
   
-  // Sort by match score (descending) and take the top results
   return results
-    .sort((a, b) => b.similarity - a.similarity)
+    .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 }
 
@@ -307,21 +607,17 @@ async function addContextToResults(results, contextLines) {
       const content = fs.readFileSync(result.file, 'utf8');
       const lines = content.split('\n');
       
-      // Calculate context range
       const startLine = Math.max(0, result.lineStart - contextLines - 1);
       const endLine = Math.min(lines.length - 1, result.lineEnd + contextLines - 1);
       
-      // Extract context
       const contextContent = lines.slice(startLine, endLine + 1).join('\n');
       
-      // Update result
       result.lineStart = startLine + 1;
       result.lineEnd = endLine + 1;
       result.content = contextContent;
       result.highlightStart = result.lineStart;
       result.highlightEnd = result.lineEnd;
     } catch (error) {
-      // Keep the original content if there's an error
       continue;
     }
   }
@@ -337,6 +633,7 @@ async function addContextToResults(results, contextLines) {
  */
 function formatSearchResults(searchResults, format = 'text') {
   const { query, results, resultCount, semanticSearch } = searchResults;
+  const SIMILARITY_THRESHOLD = 0.7; // Define threshold for formatting
   
   switch (format) {
     case 'json':
@@ -351,29 +648,37 @@ function formatSearchResults(searchResults, format = 'text') {
       output += chalk.green(`Found ${resultCount} matches using ${semanticSearch ? 'semantic' : 'keyword'} search.\n\n`);
       
       if (resultCount === 0) {
-        output += chalk.yellow('No matches found.');
+        output += chalk.yellow('No potential matches found.'); // Adjusted message
         return output;
       }
       
       for (let i = 0; i < results.length; i++) {
         const result = results[i];
-        output += chalk.blue(`[${i + 1}] ${result.file}:${result.highlightStart}-${result.highlightEnd}`);
-        output += ` (score: ${result.similarity.toFixed(2)})\n`;
+        output += chalk.blue(`[${i + 1}] ${result.file}:${result.lineStart}-${result.lineEnd}`);
+        output += ` (score: ${result.score.toFixed(2)})`;
         
-        // Split the content into lines
-        const lines = result.content.split('\n');
-        
-        // Add line numbers and highlight the matching lines
-        for (let j = 0; j < lines.length; j++) {
-          const lineNum = result.lineStart + j;
-          const isHighlighted = lineNum >= result.highlightStart && lineNum <= result.highlightEnd;
-          
-          const lineNumStr = ` ${lineNum}`.padStart(5, ' ');
-          output += isHighlighted 
-            ? chalk.yellow(`${lineNumStr} | ${lines[j]}\n`) 
-            : chalk.gray(`${lineNumStr} | ${lines[j]}\n`);
+        // Add indicator if below threshold (only for semantic search results)
+        if (semanticSearch && result.similarity !== undefined && result.similarity < SIMILARITY_THRESHOLD) {
+          output += chalk.gray(` (Similarity ${result.similarity.toFixed(2)} < ${SIMILARITY_THRESHOLD})`);
         }
         
+        if (result.constructType) {
+          const color = result.constructType === 'function' ? chalk.cyan : result.constructType === 'class' ? chalk.magenta : chalk.green;
+          output += color(` [${result.constructType}: ${result.constructName}]`);
+        }
+        output += '\n';
+        
+        const lines = result.content.split('\n');
+        for (let j = 0; j < lines.length; j++) {
+          const lineNum = result.lineStart + j;
+          const lineNumStr = ` ${lineNum}`.padStart(5, ' ');
+          // Highlight based on original match lines, not context lines added later
+          // We need to adjust addContextToResults or store original match lines if precise highlighting is needed
+          // For now, highlighting the whole fetched context block
+          const isHighlighted = true; // Simplified for now
+          const lineContent = isHighlighted ? chalk.yellow(lines[j]) : lines[j];
+          output += chalk.gray(`${lineNumStr} | `) + lineContent + '\n';
+        }
         output += '\n';
       }
       
@@ -397,7 +702,7 @@ function generateHtmlOutput(searchResults) {
     let linesHtml = '';
     for (let j = 0; j < lines.length; j++) {
       const lineNum = result.lineStart + j;
-      const isHighlighted = lineNum >= result.highlightStart && lineNum <= result.highlightEnd;
+      const isHighlighted = lineNum >= (result.highlightStart || result.lineStart) && lineNum <= (result.highlightEnd || result.lineEnd);
       
       const escapedLine = lines[j]
         .replace(/&/g, '&amp;')
@@ -411,12 +716,15 @@ function generateHtmlOutput(searchResults) {
       </tr>\n`;
     }
     
+    const constructInfo = result.constructType ? `<span class="construct-type ${result.constructType}">[${result.constructType}: ${result.constructName}]</span>` : '';
+    
     resultsHtml += `
       <div class="result">
         <div class="result-header">
           <h3>${result.file}</h3>
           <span class="lines">Lines ${result.lineStart}-${result.lineEnd}</span>
-          <span class="score">Score: ${result.similarity.toFixed(2)}</span>
+          <span class="score">Score: ${result.score.toFixed(2)}</span>
+          ${constructInfo}
         </div>
         <div class="code-container">
           <table class="code">
@@ -479,15 +787,32 @@ function generateHtmlOutput(searchResults) {
       font-weight: 600;
     }
     
-    .lines, .score {
+    .lines, .score, .construct-type {
       font-size: 14px;
-      color: #666;
       margin-left: 15px;
     }
     
     .score {
       font-weight: 600;
       color: #0077cc;
+    }
+    
+    .construct-type {
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: white;
+    }
+    
+    .construct-type.function {
+      background-color: #00b7ff;
+    }
+    
+    .construct-type.class {
+      background-color: #ff00ff;
+    }
+    
+    .construct-type.variable {
+      background-color: #00cc00;
     }
     
     .code-container {
@@ -534,7 +859,7 @@ function generateHtmlOutput(searchResults) {
         align-items: flex-start;
       }
       
-      .lines, .score {
+      .lines, .score, .construct-type {
         margin-left: 0;
         margin-top: 5px;
       }

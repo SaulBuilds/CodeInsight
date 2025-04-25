@@ -86,6 +86,7 @@ Specialized modules for different types of code analysis:
 3. **Code Search** (`src/analyzers/search.js`)
    - Performs semantic search using OpenAI embeddings
    - Implements keyword-based search as fallback
+   - Integrates Tree-sitter for parsing code into Abstract Syntax Trees (ASTs), enabling filtering by code construct type (functions, classes, etc.) during search.
    - Handles context retrieval around matches
 
 4. **Tech Stack Detector** (`src/analyzers/tech-detector.js`)
