@@ -22,7 +22,14 @@ const DEFAULT_IGNORE_PATTERNS = [
   '**/yarn.lock'
 ];
 
-// Helper function to match ignore patterns (simplified)
+/**
+ * Checks if a file path matches any of the simplified ignore patterns.
+ * Note: This is a basic implementation and may not cover all .gitignore complexities.
+ * @param {string} filePath - The absolute path to the file.
+ * @param {string[]} [ignorePatterns=DEFAULT_IGNORE_PATTERNS] - An array of ignore patterns.
+ * @param {string} baseDir - The absolute path to the base directory for relative path calculation.
+ * @returns {boolean} True if the path should be ignored, false otherwise.
+ */
 function isIgnored(filePath, ignorePatterns = DEFAULT_IGNORE_PATTERNS, baseDir) {
   const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/'); // Use forward slashes
   // Basic check: does the relative path contain ignored directory names?
@@ -33,17 +40,24 @@ function isIgnored(filePath, ignorePatterns = DEFAULT_IGNORE_PATTERNS, baseDir) 
 }
 
 /**
- * Perform semantic search on a codebase using natural language
- * @param {Object} options - Search options
- * @param {string} options.query - Natural language query
- * @param {string} options.directory - Directory to search
- * @param {number} options.limit - Maximum number of results
- * @param {number} options.context - Lines of context to show
- * @param {string} options.apiKey - OpenAI API key
- * @param {boolean} options.useEmbeddings - Whether to use embeddings for semantic search
- * @param {string[]} options.fileExt - Array of file extensions to filter by
- * @param {string} options.filterType - Type of code construct to filter for (e.g., function, class, variable)
- * @returns {Promise<Object>} - Search results with formatted output
+ * Perform semantic or keyword search on a codebase.
+ * Uses Tree-sitter for construct filtering and OpenAI embeddings for semantic matching.
+ * 
+ * @param {Object} options - Search options.
+ * @param {string} options.query - Natural language query or keywords.
+ * @param {string} [options.directory='.'] - Directory to search.
+ * @param {number} [options.limit=10] - Maximum number of results to return.
+ * @param {number} [options.context=3] - Number of lines of context to include around matches.
+ * @param {string|null} options.apiKey - OpenAI API key (required for semantic search).
+ * @param {boolean} [options.useEmbeddings=true] - Whether to use embeddings for semantic search (requires apiKey).
+ * @param {string[]} [options.fileExt=[]] - Array of file extensions (lowercase, without dot) to filter by (e.g., ['js', 'py']). If empty, defaults are used.
+ * @param {string} [options.filterType=''] - Type of code construct to filter for ('function', 'class', 'variable'). If empty, searches all content.
+ * @returns {Promise<Object>} - An object containing the search query, results array, result count, semantic search status, and formatted text output.
+ * @property {string} query - The original search query.
+ * @property {Array<Object>} results - The search results, augmented with context.
+ * @property {number} resultCount - The number of results found.
+ * @property {boolean} semanticSearch - Indicates if semantic search was used.
+ * @property {string} formattedOutput - Pre-formatted text output for the console.
  */
 async function searchCodebase(options) {
   const {
@@ -106,10 +120,12 @@ async function searchCodebase(options) {
 }
 
 /**
- * Find all code files in a directory recursively using fs
- * @param {string} directory - Directory to search
- * @param {string[]} fileExt - Array of file extensions to filter by (lowercase, e.g., ['js', 'py'])
- * @returns {Promise<string[]>} - List of absolute file paths
+ * Finds all code files matching specified extensions within a directory, recursively.
+ * Uses manual file system traversal.
+ * 
+ * @param {string} directory - Directory to search.
+ * @param {string[]} [fileExt=[]] - Array of file extensions (lowercase, without dot) to filter by (e.g., ['js', 'py']). If empty, uses default extensions.
+ * @returns {Promise<string[]>} - A promise that resolves to a list of absolute file paths matching the criteria.
  */
 async function findCodeFiles(directory, fileExt = []) {
   console.log(chalk.cyan(`--- Entering findCodeFiles (Manual FS Walk) ---`));
@@ -179,14 +195,16 @@ async function findCodeFiles(directory, fileExt = []) {
 }
 
 /**
- * Perform semantic search using OpenAI embeddings
- * @param {string[]} files - List of file paths
- * @param {string} query - Natural language query
- * @param {number} limit - Maximum number of results
- * @param {string} baseDir - Base directory for relative paths
- * @param {string} apiKey - OpenAI API key
- * @param {Object} filters - Additional filters for search
- * @returns {Promise<Object[]>} - Search results
+ * Perform semantic search using OpenAI embeddings and Tree-sitter constructs.
+ * 
+ * @param {string[]} files - List of absolute file paths to search.
+ * @param {string} query - Natural language query.
+ * @param {number} limit - Maximum number of results to return.
+ * @param {string} baseDir - Base directory path (used for calculating relative paths in results).
+ * @param {string} apiKey - OpenAI API key.
+ * @param {Object} [filters={}] - Additional filters for search.
+ * @param {string} [filters.constructType] - Specific construct type ('function', 'class', 'variable') to target.
+ * @returns {Promise<Object[]>} - A promise resolving to an array of ranked search result objects.
  */
 async function performSemanticSearch(files, query, limit, baseDir, apiKey, filters = {}) {
   console.log(chalk.yellow('--- Entering performSemanticSearch ---'));
@@ -243,13 +261,15 @@ async function performSemanticSearch(files, query, limit, baseDir, apiKey, filte
 }
 
 /**
- * Process a batch of files for semantic search
- * @param {string[]} files - Batch of file paths
- * @param {number[]} queryEmbedding - Query embedding vector
- * @param {string} baseDir - Base directory for relative paths
- * @param {Object} openai - OpenAI client
- * @param {Object} filters - Additional filters for code constructs
- * @returns {Promise<Object[]>} - Search results
+ * Process a batch of files: extract constructs or chunks, get embeddings, calculate similarity, and score results.
+ * 
+ * @param {string[]} files - Batch of absolute file paths.
+ * @param {number[]} queryEmbedding - Embedding vector for the search query.
+ * @param {string} baseDir - Base directory path for relative path calculation.
+ * @param {Object} openai - Initialized OpenAI client (v3 API).
+ * @param {Object} [filters={}] - Filters to apply.
+ * @param {string} [filters.constructType] - Specific construct type ('function', 'class', 'variable') to target.
+ * @returns {Promise<Object[]>} - A promise resolving to an array of result objects for this batch (unsorted).
  */
 async function processBatch(files, queryEmbedding, baseDir, openai, filters = {}) {
   const results = [];
@@ -290,7 +310,7 @@ async function processBatch(files, queryEmbedding, baseDir, openai, filters = {}
       console.log(chalk.blue(`Processing ${constructs.length} specific constructs for ${relativePath}...`));
       for (const construct of constructs) {
         const chunk = content.slice(construct.startIndex, construct.endIndex);
-        // if (chunk.length < 50) continue; // Temporarily commented out
+        if (chunk.length < 50) continue;
         console.log(chalk.grey(`  Processing construct '${construct.name}' chunk (length ${chunk.length})`));
         
         const embedding = await getEmbedding(chunk, openai);
@@ -324,7 +344,7 @@ async function processBatch(files, queryEmbedding, baseDir, openai, filters = {}
       console.log(chalk.blue(`Processing ${relativePath} using general chunks...`));
       const chunks = splitIntoChunks(content);
       for (const [chunk, lineStart, lineEnd] of chunks) {
-        // if (chunk.length < 50) continue; // Temporarily commented out
+        if (chunk.length < 50) continue;
         console.log(chalk.grey(`  Processing general chunk lines ${lineStart}-${lineEnd} (length ${chunk.length})`));
 
         const embedding = await getEmbedding(chunk, openai);
@@ -352,10 +372,11 @@ async function processBatch(files, queryEmbedding, baseDir, openai, filters = {}
 }
 
 /**
- * Extract code constructs using Tree-Sitter
- * @param {Object} tree - Parsed Tree-Sitter tree
- * @param {string} filterType - Type of construct to filter for ('function', 'class', 'variable')
- * @returns {Object[]} - Array of constructs with type, startIndex, endIndex, lineStart, and lineEnd
+ * Extract specific code constructs (functions, classes, variables) from a parsed Tree-Sitter tree.
+ * 
+ * @param {Parser.Tree} tree - Parsed Tree-Sitter tree for a file.
+ * @param {string} filterType - The simplified type of construct to filter for ('function', 'class', 'variable') or empty/null to extract all supported types.
+ * @returns {Array<Object>} - Array of extracted constructs, each with: `type` (string), `name` (string), `startIndex` (number), `endIndex` (number), `lineStart` (number), `lineEnd` (number).
  */
 function extractConstructs(tree, filterType) {
   const constructs = [];
@@ -440,28 +461,12 @@ function extractConstructs(tree, filterType) {
 }
 
 /**
- * Split file content into reasonably sized chunks of code
- * @param {string} content - File content
- * @returns {Array} - Array of [chunk, lineStart, lineEnd] tuples
- */
-function splitIntoChunks(content) {
-  const lines = content.split('\n');
-  const chunks = [];
-  const chunkSize = 30;
-  
-  for (let i = 0; i < lines.length; i += chunkSize) {
-    const chunk = lines.slice(i, i + chunkSize).join('\n');
-    chunks.push([chunk, i + 1, Math.min(i + chunkSize, lines.length)]);
-  }
-  
-  return chunks;
-}
-
-/**
- * Get embedding for a text using OpenAI API
- * @param {string} text - Text to embed
- * @param {Object} openai - OpenAI client
- * @returns {Promise<number[]>} - Embedding vector
+ * Get embedding for a text snippet using the OpenAI API (v3).
+ * Includes basic input validation and error handling.
+ * 
+ * @param {string} text - Text content to embed.
+ * @param {OpenAIApi} openai - Initialized OpenAI client (v3 API).
+ * @returns {Promise<number[]>} - Embedding vector (array of numbers), or an array of zeros on error.
  */
 async function getEmbedding(text, openai) {
   try {
@@ -512,13 +517,34 @@ function calculateCosineSimilarity(vec1, vec2) {
 }
 
 /**
- * Perform simple keyword-based search
- * @param {string[]} files - List of file paths
- * @param {string} query - Search query
- * @param {number} limit - Maximum number of results
- * @param {string} baseDir - Base directory for relative paths
- * @param {Object} filters - Additional filters for search
- * @returns {Promise<Object[]>} - Search results
+ * Split file content into reasonably sized chunks of code
+ * @param {string} content - File content
+ * @returns {Array} - Array of [chunk, lineStart, lineEnd] tuples
+ */
+function splitIntoChunks(content) {
+  const lines = content.split('\n');
+  const chunks = [];
+  const chunkSize = 30;
+  
+  for (let i = 0; i < lines.length; i += chunkSize) {
+    const chunk = lines.slice(i, i + chunkSize).join('\n');
+    chunks.push([chunk, i + 1, Math.min(i + chunkSize, lines.length)]);
+  }
+  
+  return chunks;
+}
+
+/**
+ * Perform simple keyword-based search.
+ * Can optionally filter by construct type using Tree-sitter.
+ * 
+ * @param {string[]} files - List of absolute file paths.
+ * @param {string} query - Search query (keywords).
+ * @param {number} limit - Maximum number of results.
+ * @param {string} baseDir - Base directory for relative paths.
+ * @param {Object} [filters={}] - Additional filters for search.
+ * @param {string} [filters.constructType] - Type of code construct to filter for ('function', 'class', 'variable').
+ * @returns {Promise<Object[]>} - A promise resolving to an array of ranked search result objects based on keyword matches.
  */
 async function performSimpleSearch(files, query, limit, baseDir, filters = {}) {
   const results = [];
@@ -548,6 +574,7 @@ async function performSimpleSearch(files, query, limit, baseDir, filters = {}) {
       if (constructs.length > 0) {
         for (const construct of constructs) {
           const chunk = content.slice(construct.startIndex, construct.endIndex).toLowerCase();
+          if (chunk.length < 50) continue;
           let matchScore = 0;
           for (const keyword of keywords) {
             if (chunk.includes(keyword)) matchScore += 1;
@@ -569,6 +596,7 @@ async function performSimpleSearch(files, query, limit, baseDir, filters = {}) {
         const lines = content.split('\n');
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i].toLowerCase();
+          if (line.length < 10) continue;
           let matchScore = 0;
           for (const keyword of keywords) {
             if (line.includes(keyword)) matchScore += 1;
@@ -626,10 +654,16 @@ async function addContextToResults(results, contextLines) {
 }
 
 /**
- * Generate formatted output for search results
- * @param {Object} searchResults - Search results
- * @param {string} format - Output format (text, json, html)
- * @returns {string} - Formatted output
+ * Generate formatted terminal output for search results.
+ * Includes syntax highlighting and indicates results with low semantic similarity.
+ * 
+ * @param {Object} searchResults - The results object returned by `searchCodebase`.
+ * @param {string} searchResults.query - The original search query.
+ * @param {Array<Object>} searchResults.results - The array of result objects (must include `similarity` if semantic search).
+ * @param {number} searchResults.resultCount - The total number of results.
+ * @param {boolean} searchResults.semanticSearch - Whether semantic search was used.
+ * @param {string} [format='text'] - Output format ('text', 'json', 'html'). Currently only 'text' is fully implemented here for console output.
+ * @returns {string} - Formatted output string (currently only for 'text' format).
  */
 function formatSearchResults(searchResults, format = 'text') {
   const { query, results, resultCount, semanticSearch } = searchResults;
