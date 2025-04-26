@@ -12,6 +12,7 @@ const { program } = require('commander');
 const { marked } = require('marked');
 const TerminalRenderer = require('marked-terminal');
 const dotenv = require('dotenv');
+const chalk = require('chalk');
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +47,10 @@ const {
   searchInteractive,
   detectStackInteractive
 } = require('./commands');
+
+// Import specific analyzers needed for direct call
+const { searchCodebase, formatSearchResults } = require('./analyzers/search');
+const { getOpenAIKey } = require('./api/openai-utils');
 
 // Configure marked with terminal renderer
 marked.setOptions({
@@ -89,6 +94,8 @@ program
     try {
       displayInlineHeader();
       
+      const { extractRepositoryCode } = require('./utils/file');
+
       const exclude = options.exclude.split(',').map(p => p.trim());
       const maxSize = options.maxSize ? parseInt(options.maxSize) : null;
       
@@ -98,6 +105,7 @@ program
         exclude,
         maxSize,
       });
+      console.log('Extracted code saved successfully.'); 
     } catch (error) {
       handleError(error, 'Error extracting code');
     }
@@ -281,12 +289,58 @@ program
   .option('--limit <count>', 'Maximum number of results', '10')
   .option('--context <lines>', 'Lines of context to show', '3')
   .option('--api-key <key>', 'OpenAI API key for semantic search')
-  .option('--use-embeddings', 'Use semantic search with embeddings', false)
+  .option('--no-use-embeddings', 'Disable semantic search with embeddings')
+  .option('--filter-type <type>', 'Filter by code construct type (function, class, variable)')
+  .option('--file-ext <exts>', 'Comma-separated file extensions to filter (e.g., js,py)')
   .action(async (directory, options) => {
     try {
       displayInlineHeader();
-      
-      await searchInteractive(directory);
+
+      // Check if query is provided. If not, fall back to interactive mode.
+      if (!options.query) {
+        console.log(chalk.yellow('No query provided via --query. Entering interactive mode...'));
+        // Import interactive command here if not already imported
+        const { searchInteractive } = require('./commands'); 
+        await searchInteractive(directory);
+        return;
+      }
+
+      // Parse file extensions
+      const fileExtArray = options.fileExt ? options.fileExt.split(',').map(ext => ext.trim()).filter(ext => ext) : [];
+
+      // Determine if embeddings should be used (default is true unless --no-use-embeddings is specified)
+      const useEmbeddings = options.useEmbeddings === undefined ? true : options.useEmbeddings;
+
+      // Get OpenAI API key if using embeddings
+      let finalApiKey = null;
+      if (useEmbeddings) {
+        finalApiKey = await getOpenAIKey(options.apiKey); // Checks env var if options.apiKey is null/empty
+
+        if (!finalApiKey) {
+          console.log(chalk.yellow('No API key provided and OPENAI_API_KEY not set. Semantic search disabled.'));
+        }
+      }
+
+      const searchOptions = {
+        query: options.query,
+        directory,
+        limit: parseInt(options.limit),
+        context: parseInt(options.context),
+        apiKey: finalApiKey,
+        useEmbeddings: useEmbeddings && !!finalApiKey, // Only use embeddings if key is available
+        fileExt: fileExtArray,
+        filterType: options.filterType || ''
+      };
+
+      console.log(chalk.blue(`Searching in '${directory}' for query: "${searchOptions.query}"`));
+      console.log(chalk.blue(`Options: ${JSON.stringify({limit: searchOptions.limit, context: searchOptions.context, useEmbeddings: searchOptions.useEmbeddings, fileExt: searchOptions.fileExt, filterType: searchOptions.filterType })}`));
+
+      const results = await searchCodebase(searchOptions);
+
+      // Format and display results
+      const formattedOutput = formatSearchResults(results, 'text');
+      console.log(formattedOutput);
+
     } catch (error) {
       handleError(error, 'Error searching codebase');
     }

@@ -180,18 +180,27 @@ Options:
 
 ### Search Code
 
-Search for code patterns or concepts in a repository:
+Search for code patterns or concepts using semantic or keyword search. Semantic search leverages OpenAI embeddings for understanding intent, while keyword search looks for exact matches.
 
 ```bash
-vibe search <directory> --query "database connection handling" --limit 10
+# Semantic search for error handling functions in JS files
+vibe search <directory> --query "error handling" --filter-type function --file-ext js
+
+# Keyword search for the word 'connect' in any file
+vibe search <directory> --query "connect" --no-use-embeddings 
+
+# Semantic search for Processor classes in Python files
+vibe search <directory> --query "processor class" --filter-type class --file-ext py
 ```
 
 Options:
-- `--query`: Search query
-- `--limit`: Maximum number of results
-- `--context`: Lines of context to show
-- `--api-key`: OpenAI API key for semantic search
-- `--use-embeddings`: Whether to use semantic search with embeddings
+- `--query <text>`: Search query (required if not running interactively)
+- `--limit <count>`: Maximum number of results (default: 10)
+- `--context <lines>`: Lines of context around match to show (default: 3)
+- `--api-key <key>`: OpenAI API key (required for semantic search, reads from OPENAI_API_KEY env var if not provided)
+- `--no-use-embeddings`: Disable semantic search with embeddings and use keyword search instead (semantic search is enabled by default)
+- `--filter-type <type>`: Filter results by code construct type (`function`, `class`, `variable`)
+- `--file-ext <exts>`: Filter results by file extensions (comma-separated, e.g., `js,py,ts`)
 
 ### Detect Tech Stack
 

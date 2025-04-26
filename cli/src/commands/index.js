@@ -37,7 +37,7 @@ const {
 // Import analyzers
 const { analyzeComplexity } = require('../analyzers/complexity-analyzer');
 const { analyzeDependencies } = require('../analyzers/dep-analyzer');
-const { searchCodebase } = require('../analyzers/search');
+const { searchCodebase, formatSearchResults } = require('../analyzers/search');
 const { detectTechStack } = require('../analyzers/tech-detector');
 
 // Constants
@@ -512,7 +512,7 @@ async function dependenciesInteractive(repoPath) {
  * @param {string} repoPath - Path to the repository
  */
 async function searchInteractive(repoPath) {
-  const { query, limit, context, apiKey, useEmbeddings } = await inquirer.prompt([
+  const { query, limit, context, apiKey, useEmbeddings, fileExt, filterType } = await inquirer.prompt([
     {
       type: 'input',
       name: 'query',
@@ -552,7 +552,28 @@ async function searchInteractive(repoPath) {
       default: '',
       when: (answers) => answers.useEmbeddings,
     },
+    {
+      type: 'input',
+      name: 'fileExt',
+      message: 'File extensions to filter (comma-separated, e.g., js,py):',
+      default: '',
+    },
+    {
+      type: 'list',
+      name: 'filterType',
+      message: 'Filter by code construct type:',
+      choices: [
+        { name: 'All constructs', value: '' },
+        { name: 'Functions', value: 'function' },
+        { name: 'Classes', value: 'class' },
+        { name: 'Variables', value: 'variable' }
+      ],
+      default: '',
+    }
   ]);
+  
+  // Parse file extensions
+  const fileExtArray = fileExt ? fileExt.split(',').map(ext => ext.trim()).filter(ext => ext) : [];
   
   // Get OpenAI API key if using embeddings
   let finalApiKey = null;
@@ -571,24 +592,13 @@ async function searchInteractive(repoPath) {
     context: parseInt(context),
     apiKey: finalApiKey,
     useEmbeddings: useEmbeddings && !!finalApiKey,
+    fileExt: fileExtArray,
+    filterType
   });
   
-  if (results.hits.length === 0) {
-    console.log(chalk.yellow('\nNo results found for your query.'));
-  } else {
-    console.log(chalk.green(`\nFound ${results.hits.length} results for your query:`));
-    
-    for (let i = 0; i < results.hits.length; i++) {
-      const hit = results.hits[i];
-      console.log(`\n${chalk.cyan(`[${i + 1}] ${hit.file} (Lines ${hit.lineStart}-${hit.lineEnd})`)}`);
-      console.log(chalk.gray(`Score: ${hit.score.toFixed(2)}`));
-      console.log('-'.repeat(80));
-      console.log(hit.content);
-      console.log('-'.repeat(80));
-    }
-    
-    console.log(chalk.gray(`\nSearch completed in ${results.timeMs}ms`));
-  }
+  // Format and display results using the updated formatSearchResults function
+  const formattedOutput = formatSearchResults(results, 'text');
+  console.log(formattedOutput);
 }
 
 /**
@@ -782,6 +792,48 @@ async function logoutCommand() {
   }
 }
 
+/**
+ * Setup command-line interface
+ */
+function setupCLI(program) {
+  // Existing commands can go here if needed
+
+  program
+    .command('search <directory>')
+    .description('Search codebase using natural language')
+    .option('--query <query>', 'Search query')
+    .option('--limit <limit>', 'Maximum number of results', parseInt, 10)
+    .option('--context <context>', 'Lines of context', parseInt, 3)
+    .option('--api-key <key>', 'OpenAI API key')
+    .option('--use-embeddings', 'Use semantic search', true)
+    .option('--filter-type <type>', 'Filter by code construct (function, class)')
+    .option('--file-ext <extensions>', 'Filter by file extensions (e.g., js,py)')
+    .option('--output <format>', 'Output format (text, json, html)', 'text')
+    .action(async (directory, options) => {
+      try {
+        // Parse file extensions
+        const fileExtArray = options.fileExt ? options.fileExt.split(',').map(ext => ext.trim()).filter(ext => ext) : [];
+        
+        const results = await searchCodebase({
+          query: options.query,
+          directory,
+          limit: options.limit,
+          context: options.context,
+          apiKey: options.apiKey || process.env.OPENAI_API_KEY,
+          useEmbeddings: options.useEmbeddings,
+          fileExt: fileExtArray,
+          filterType: options.filterType
+        });
+        
+        const formattedOutput = formatSearchResults(results, options.output);
+        console.log(formattedOutput);
+      } catch (error) {
+        handleError(error, 'Error performing search');
+        process.exit(1);
+      }
+    });
+}
+
 module.exports = {
   // Authentication commands
   login: loginCommand,
@@ -797,5 +849,6 @@ module.exports = {
   complexityInteractive,
   dependenciesInteractive,
   searchInteractive,
-  detectStackInteractive
+  detectStackInteractive,
+  setupCLI
 };
